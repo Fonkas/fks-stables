@@ -7,7 +7,7 @@
 Training = { isTrainer = false, active = nil }
 
 local T = Config.Training
-local function Notify(msg, kind) lib.notify({ title = _L('train_title'), description = msg, type = kind or 'inform' }) end
+local function Notify(msg, kind) FKS.Notify({ title = _L('train_title'), description = msg, type = kind or 'inform' }) end
 local function B(v) return v == true or v == 1 end
 local function Var(text) return CreateVarString(10, 'LITERAL_STRING', text) end
 local function Me() return PlayerPedId() end

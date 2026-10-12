@@ -1,5 +1,15 @@
 Config = Config or {}
 
+-- Server console: "up to date" / "OUTDATED" compared with the version in fxmanifest.lua on GitHub,
+-- and a warning (with the download link) when fks-utils is not running
+Config.VersionCheck = {
+    enabled  = true,
+    repo     = 'Fonkas/fks-stables',    -- GitHub "user/repository"
+    branch   = 'main',
+    interval = 12,                      -- check again every X hours (0 = only on start)
+    utilsUrl = 'https://github.com/Fonkas/fks-utils',
+}
+
 Config.Debug = false                -- true: extra info in the F8 console and debug commands (/fks_wildspawn, /fks_animal...)
 
 -- Language: 'en' | 'pt' | 'br' | 'es' | 'fr' | 'de' | 'it' (files in locales/; missing keys fall back to English)

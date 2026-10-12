@@ -5,7 +5,7 @@
 local K = Config.Prompts
 
 local function Var(text) return CreateVarString(10, 'LITERAL_STRING', text) end
-local function Notify(msg, kind) lib.notify({ title = _L('stable'), description = msg, type = kind or 'inform' }) end
+local function Notify(msg, kind) FKS.Notify({ title = _L('stable'), description = msg, type = kind or 'inform' }) end
 
 local function Make(group, key, text, hold, tab)
     local p = PromptRegisterBegin()

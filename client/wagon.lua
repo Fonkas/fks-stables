@@ -8,7 +8,7 @@ Wagon = {
 }
 
 local function Notify(msg, kind)
-    lib.notify({ title = Wagon.data and Wagon.data.name or _L('stable'), description = msg, type = kind or 'inform' })
+    FKS.Notify({ title = Wagon.data and Wagon.data.name or _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 local function Exists() return Wagon.veh and DoesEntityExist(Wagon.veh) end
@@ -45,7 +45,7 @@ function Wagon.Break(veh, silent)
     if not silent then
         local me = PlayerPedId()
         if veh == Wagon.veh or GetVehiclePedIsIn(me, false) == veh then
-            lib.notify({ title = (veh == Wagon.veh and Wagon.data and Wagon.data.name) or _L('stable'), description = _L('wagon_broke'), type = 'error' })
+            FKS.Notify({ title = (veh == Wagon.veh and Wagon.data and Wagon.data.name) or _L('stable'), description = _L('wagon_broke'), type = 'error' })
         end
     end
 end
@@ -69,7 +69,7 @@ function Wagon.Spawn(data, at, quick)
     if Exists() then Wagon.Despawn(false) end
 
     if not quick and Config.Wagon.spawnDelay > 0 then
-        lib.progressCircle({ duration = Config.Wagon.spawnDelay * 1000, label = _L('wagon_preparing'), position = 'bottom', canCancel = false })
+        FKS.ProgressBar({ duration = Config.Wagon.spawnDelay * 1000, label = _L('wagon_preparing'), position = 'bottom', canCancel = false })
     end
 
     local hash = Look.LoadModel(data.model)
@@ -291,11 +291,11 @@ RegisterCommand('fks_animal', function(_, args)
     local model = (args[1] or 'a_c_deer_01'):lower()
     local info = FKS.CarcassByHash[FKS.Hash(joaat(model))]
     if not info then
-        return lib.notify({ title = 'fks-stables', description = model .. ' is not in config/animals.lua', type = 'error' })
+        return FKS.Notify({ title = 'fks-stables', description = model .. ' is not in config/animals.lua', type = 'error' })
     end
     local at = GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 1.5, 0.0)
     Wagon.SpawnCarcass({ model = model, pelt = info.pelt, quality = tonumber(args[2]) or 2 }, at)
-    lib.notify({ title = 'fks-stables', description = ('%s spawned in front of you - pick it up and take it to the wagon.'):format(info.label), type = 'success' })
+    FKS.Notify({ title = 'fks-stables', description = ('%s spawned in front of you - pick it up and take it to the wagon.'):format(info.label), type = 'success' })
 end, false)
 
 function Wagon.RestoreAfterLogin()

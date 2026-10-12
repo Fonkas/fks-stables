@@ -1,0 +1,7 @@
+# Text files: stored with LF in the repository, checked out with CRLF (works on Windows and Linux servers)
+* text=auto eol=crlf
+
+# binary files
+*.png binary
+*.woff2 binary
+*.ymt binary

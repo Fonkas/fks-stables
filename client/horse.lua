@@ -15,7 +15,7 @@ local BOND_POINTS = { 1, 817, 1634, 2450 }
 local CORE_HEALTH, CORE_STAMINA = 0, 1
 
 local function Notify(msg, kind)
-    lib.notify({ title = Horse.data and Horse.data.name or _L('stable'), description = msg, type = kind or 'inform' })
+    FKS.Notify({ title = Horse.data and Horse.data.name or _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 local function Me() return PlayerPedId() end
@@ -98,7 +98,10 @@ function Horse.ApplyScale()
     local foal = d.bred == true and d.age ~= nil and d.age < adult
     local scale = foal and FKS.Clamp((F.minScale or 0.5) + (1 - (F.minScale or 0.5)) * (d.age / adult), F.minScale or 0.5, 1.0) or 1.0
     d.scale = scale
-    SetPedScale(Horse.ped, scale + 0.0)
+    -- adults keep the model's own size: SetPedScale(1.0) overrides it (e.g. A_C_Donkey_01 ends up bigger
+    -- than a horse), so the scale is only set on foals — and reset once when a foal grows up
+    if foal or Horse.scaledPed == Horse.ped then SetPedScale(Horse.ped, scale + 0.0) end
+    Horse.scaledPed = foal and Horse.ped or nil
     d.foal = foal
     d.rideable = not d.bred or d.age == nil or d.age >= (F.rideAge or adult)
     local st = Entity(Horse.ped).state
@@ -118,12 +121,15 @@ end)
 ---------------------------------------------------------------------------
 -- Spawn / despawn
 ---------------------------------------------------------------------------
+-- ground height at x, y (second return = found). Probes from well above the player: on a slope the
+-- ground can be higher than the player, and a probe started below it finds nothing
 local function GroundZ(x, y, z)
-    for i = 0, 20 do
-        local ok, gz = GetGroundZFor_3dCoord(x, y, z + 50.0 - i * 5.0, false)
-        if ok then return gz end
+    RequestCollisionAtCoord(x, y, z)
+    for i = 0, 30 do
+        local ok, gz = GetGroundZFor_3dCoord(x, y, z + 100.0 - i * 5.0, false)
+        if ok then return gz, true end
     end
-    return z
+    return z, false
 end
 
 -- Spot for the horse to appear when called (nearby road or ground ~40m away)
@@ -132,11 +138,11 @@ end
 local function SpawnPointNear()
     local p = GetEntityCoords(Me())
     local minD, maxD = Config.Horse.spawnDistance[1], Config.Horse.spawnDistance[2]
-    local tx, ty
+    local ground -- first random spot where the ground was found (used when there is no road)
     for _ = 1, 6 do
         local r = math.random(minD, maxD)
         local ang = math.random() * math.pi * 2
-        tx, ty = p.x + math.cos(ang) * r, p.y + math.sin(ang) * r
+        local tx, ty = p.x + math.cos(ang) * r, p.y + math.sin(ang) * r
         local found, node = GetClosestVehicleNode(tx, ty, p.z, 1, 3.0, 0.0)
         if (found == true or found == 1) and node then
             local d = #(vector3(node.x, node.y, p.z) - vector3(p.x, p.y, p.z))
@@ -144,9 +150,18 @@ local function SpawnPointNear()
                 return vector4(node.x, node.y, node.z, GetHeadingFromVector_2d(p.x - node.x, p.y - node.y))
             end
         end
+        if not ground then
+            local gz, ok = GroundZ(tx, ty, p.z)
+            if ok then ground = vector4(tx, ty, gz, GetHeadingFromVector_2d(p.x - tx, p.y - ty)) end
+        end
     end
     -- no suitable road: open ground at that distance
-    return vector4(tx, ty, GroundZ(tx, ty, p.z), GetHeadingFromVector_2d(p.x - tx, p.y - ty))
+    if ground then return ground end
+    -- ground not found anywhere (spawning at the player's height could put the horse inside the terrain,
+    -- where it falls through the map and the game deletes it): a few metres from the player instead
+    if Config.Debug then print('[fks-stables] no ground found for the horse spawn, using a spot near the player') end
+    local q = GetOffsetFromEntityInWorldCoords(Me(), 0.0, -8.0, 0.0)
+    return vector4(q.x, q.y, GroundZ(q.x, q.y, q.z), GetEntityHeading(Me()))
 end
 
 -- owner, mount, personality and flags of the horse — applied on spawn and again on revive
@@ -227,6 +242,26 @@ function Horse.Spawn(data, at, fromStable, dead)
     st:set('fksOwner', GetPlayerServerId(PlayerId()), true)
     st:set('fksName', data.name, true)
     TriggerServerEvent('fks-stables:server:spawned', 'horse', data.id, netId)
+
+    -- the horse vanished right after appearing (fell through the map, removed by the game...) without being
+    -- despawned by the script (Despawn clears Horse.ped): call it again once, instead of waiting for another whistle
+    if not dead and not data.respawning then
+        CreateThread(function()
+            local stop = GetGameTimer() + 15000
+            while GetGameTimer() < stop and Horse.ped == ped do
+                if not DoesEntityExist(ped) then
+                    if Config.Debug then print(('[fks-stables] horse vanished after spawning at %.1f, %.1f, %.1f - calling it again'):format(at.x, at.y, at.z)) end
+                    if Horse.blip then RemoveBlip(Horse.blip) Horse.blip = nil end
+                    Horse.ped, Horse.following = nil, false
+                    data.respawning = true
+                    Horse.Spawn(data, nil, false)
+                    data.respawning = nil
+                    return
+                end
+                Wait(250)
+            end
+        end)
+    end
 
     if dead then
         Horse.deadAt = GetGameTimer() -- already dead in the database: do not warn "died" again

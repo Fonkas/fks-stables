@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1
+
+- Fix: donkeys (A_C_Donkey_01) and other adult horses keep the model's original size (the donkey was bigger than a horse).
+- Fix: the called horse sometimes vanished right after appearing (spawn point inside the terrain on slopes); if it
+  still vanishes in the first seconds it is called again automatically.
+- Server console shows whether the resource is up to date or outdated compared with GitHub.
+- fks-utils is no longer a hard dependency: without it the resource still starts, the console shows a warning with
+  the download link, and notifications / progress bar use ox_lib.
+
 ## 1.0.0
 
 First public release.

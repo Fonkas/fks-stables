@@ -17,9 +17,12 @@ Stable.npcs = npcs
 -- foals on display / at the breeding spot: the game resets the size when the look updates, so it is
 -- reapplied all the time (like county-ranch)
 local scaled = {} -- [ped] = scale
+-- adults are left alone: SetPedScale(1.0) overrides the model's own size (A_C_Donkey_01 would end up bigger
+-- than a horse); only a ped that was shown as a foal is reset to 1.0
 function Stable.KeepScale(ped, scale)
-    scaled[ped] = (scale and scale < 0.999) and scale or nil
-    SetPedScale(ped, (scale or 1.0) + 0.0)
+    local foal = scale and scale < 0.999
+    if foal or scaled[ped] then SetPedScale(ped, (foal and scale or 1.0) + 0.0) end
+    scaled[ped] = foal and scale or nil
 end
 CreateThread(function()
     while true do
@@ -32,7 +35,7 @@ CreateThread(function()
 end)
 
 local function Notify(msg, kind)
-    lib.notify({ title = _L('stable'), description = msg, type = kind or 'inform' })
+    FKS.Notify({ title = _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 ---------------------------------------------------------------------------

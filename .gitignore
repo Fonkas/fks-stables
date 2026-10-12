@@ -1,0 +1,13 @@
+# editors / OS
+.vscode/
+.idea/
+.claude/
+*.code-workspace
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# logs / temporary files
+*.log
+*.tmp
+*.bak

@@ -22,7 +22,7 @@ local function Cid(P) return P.cid end
 local function JobOf(P) return P.job end
 
 local function Notify(src, msg, kind)
-    TriggerClientEvent('ox_lib:notify', src, { title = _L('stable'), description = msg, type = kind or 'inform' })
+    TriggerClientEvent('fks-stables:client:notify', src, { title = _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 local function Limits(P)

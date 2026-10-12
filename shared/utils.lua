@@ -123,3 +123,21 @@ function FKS.Clamp(v, lo, hi)
     if v > hi then return hi end
     return v
 end
+
+-- Notifications / progress bar: fks-utils when it is running, ox_lib otherwise
+-- (without fks-utils the server console shows a warning with the download link, see server/version.lua)
+if not IsDuplicityVersion() then
+    local function HasUtils() return GetResourceState('fks-utils') == 'started' end
+
+    function FKS.Notify(data)
+        if HasUtils() then return exports['fks-utils']:Notify(data) end
+        lib.notify({ title = data.title, description = data.description, type = data.type or 'inform' })
+    end
+
+    function FKS.ProgressBar(data)
+        if HasUtils() then return exports['fks-utils']:Progress(data) end
+        return lib.progressCircle({ duration = data.duration, label = data.label, position = data.position, canCancel = data.canCancel })
+    end
+
+    RegisterNetEvent('fks-stables:client:notify', function(data) FKS.Notify(data) end)
+end
