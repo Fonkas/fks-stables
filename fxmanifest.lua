@@ -7,11 +7,13 @@ lua54 'yes'
 name 'fks-stables'
 author 'FKS'
 description 'Stables, horses, wagons, wild horse taming, training and breeding for RedM (VORP / RSG)'
-version '1.0.1'
+version '1.1.0'
 license 'GPL-3.0-or-later'
+fks_utils_version '1.1.0' -- minimum fks-utils version (VORP / RSG bridge, notifications, progress bar)
 
 shared_scripts {
     '@ox_lib/init.lua',
+    '@fks-utils/import.lua',
     'config/main.lua',
     'config/horses.lua',
     'config/wagons.lua',
@@ -37,11 +39,10 @@ client_scripts {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/bridge.lua',
+    'server/version.lua',
     'server/db.lua',
     'server/main.lua',
     'server/trainer.lua',
-    'server/version.lua',
 }
 
 ui_page 'html/index.html'
@@ -58,9 +59,9 @@ files {
     'html/fonts/*.woff2',
 }
 
+-- + fks-utils (required: VORP / RSG bridge, notifications, progress bar) - https://github.com/Fonkas/fks-utils
+--   not listed below so that, when it is missing, the server console shows the download link (server/version.lua)
 -- + a framework (rsg-core or vorp_core) and an inventory (ox_inventory, rsg-inventory or vorp_inventory)
--- + fks-utils (notifications and progress bar) - not listed here so the resource still starts without it:
---   the server console warns with the download link and ox_lib is used instead
 dependencies {
     'ox_lib',
     'oxmysql',

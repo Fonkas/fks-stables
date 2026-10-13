@@ -86,6 +86,7 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
 |---|---|
 | Server | RedM with **OneSync** enabled |
 | Libraries | [ox_lib](https://github.com/overextended/ox_lib), [oxmysql](https://github.com/overextended/oxmysql) |
+| FKS base | [fks-utils](https://github.com/Fonkas/fks-utils) **1.1.0 or newer** (VORP / RSG bridge, notifications, progress bar) |
 | Framework | [vorp_core](https://github.com/VORPCORE/vorp-core-lua) **or** [rsg-core](https://github.com/Rexshack-RedM/rsg-core) |
 | Inventory | `vorp_inventory`, `rsg-inventory` or `ox_inventory` |
 
@@ -102,6 +103,7 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
    ensure oxmysql
    ensure vorp_core        # or rsg-core
    ensure vorp_inventory   # or rsg-inventory / ox_inventory
+   ensure fks-utils
    ensure fks-stables
    ```
 4. **Create the items** in your inventory — see [Items](#items).
@@ -370,6 +372,8 @@ fks-stables/
 
 ## Troubleshooting
 
+- **`MISSING REQUIRED DEPENDENCY: fks-utils`** — download [fks-utils](https://github.com/Fonkas/fks-utils) and add
+  `ensure fks-utils` before `ensure fks-stables`.
 - **Nothing happens / no prompts** — check the server console line `[fks-stables] framework: ... | inventory: ...`.
   If one is `nil`, set `Config.Framework` / `Config.Inventory`.
 - **Items do nothing** — the item has to exist in your inventory with the same name as in the config, and be usable.

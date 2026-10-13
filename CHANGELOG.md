@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- **fks-utils 1.1.0 is now required.** The VORP / RSG bridge (players, money, items, storages) moved into fks-utils,
+  shared by all the FKS scripts: `ensure fks-utils` before `ensure fks-stables`. Without it the server console shows
+  the download link.
+- Notifications and progress bar always use fks-utils (no ox_lib fallback).
+- No config or database changes.
+
 ## 1.0.1
 
 - Fix: donkeys (A_C_Donkey_01) and other adult horses keep the model's original size (the donkey was bigger than a horse).

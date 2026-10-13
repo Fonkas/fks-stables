@@ -13,7 +13,7 @@ local Z = C.zones or {}
 local retry = {}         -- [entity] = GetGameTimer() from which you can try again
 local tameResult = nil   -- mini-game answer (NUI)
 
-local function Notify(msg, kind) FKS.Notify({ title = _L('wild_title'), description = msg, type = kind or 'inform' }) end
+local function Notify(msg, kind) Bridge.Notify({ title = _L('wild_title'), description = msg, type = kind or 'inform' }) end
 local function B(v) return v == true or v == 1 end
 local function Var(text) return CreateVarString(10, 'LITERAL_STRING', text) end
 local function Me() return PlayerPedId() end

@@ -35,7 +35,7 @@ CreateThread(function()
 end)
 
 local function Notify(msg, kind)
-    FKS.Notify({ title = _L('stable'), description = msg, type = kind or 'inform' })
+    Bridge.Notify({ title = _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 ---------------------------------------------------------------------------

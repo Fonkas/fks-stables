@@ -15,7 +15,7 @@ local BOND_POINTS = { 1, 817, 1634, 2450 }
 local CORE_HEALTH, CORE_STAMINA = 0, 1
 
 local function Notify(msg, kind)
-    FKS.Notify({ title = Horse.data and Horse.data.name or _L('stable'), description = msg, type = kind or 'inform' })
+    Bridge.Notify({ title = Horse.data and Horse.data.name or _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 local function Me() return PlayerPedId() end
@@ -1170,20 +1170,9 @@ local function RestoreAfterLogin()
     end
 end
 
-local function OnLoaded()
-    Wait(5000)
-    RestoreAfterLogin()
-    if Wagon then Wagon.RestoreAfterLogin() end
-end
-
--- rsg-core / vorp_core
-RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', OnLoaded)
-RegisterNetEvent('vorp:SelectedCharacter', OnLoaded)
-
--- resource restart with the player already in game (the server returns nothing if there is no character)
-AddEventHandler('onResourceStart', function(res)
-    if res ~= GetCurrentResourceName() then return end
-    Wait(3000)
+-- character loaded (rsg-core / vorp_core), or resource restart with the player already in game
+Bridge.OnLoaded(function()
+    Wait(4000)
     RestoreAfterLogin()
     if Wagon then Wagon.RestoreAfterLogin() end
 end)

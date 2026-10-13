@@ -7,7 +7,7 @@
 Training = { isTrainer = false, active = nil }
 
 local T = Config.Training
-local function Notify(msg, kind) FKS.Notify({ title = _L('train_title'), description = msg, type = kind or 'inform' }) end
+local function Notify(msg, kind) Bridge.Notify({ title = _L('train_title'), description = msg, type = kind or 'inform' }) end
 local function B(v) return v == true or v == 1 end
 local function Var(text) return CreateVarString(10, 'LITERAL_STRING', text) end
 local function Me() return PlayerPedId() end
@@ -49,8 +49,7 @@ CreateThread(function()
         Wait(60000)
     end
 end)
-RegisterNetEvent('RSGCore:Client:OnJobUpdate', function() SetTimeout(1000, RefreshTrainer) end)
-RegisterNetEvent('vorp:setjob', function() SetTimeout(1000, RefreshTrainer) end)
+Bridge.OnJobUpdate(RefreshTrainer)
 
 -- ends the training in progress (msg = notice)
 function Training.Stop(msg, kind)

@@ -8,7 +8,7 @@ local K, C = Config.Prompts, Config.Care
 local function Me() return PlayerPedId() end
 local function Var(text) return CreateVarString(10, 'LITERAL_STRING', text) end
 local function Notify(msg, kind)
-    FKS.Notify({ title = Horse.data and Horse.data.name or _L('stable'), description = msg, type = kind or 'inform' })
+    Bridge.Notify({ title = Horse.data and Horse.data.name or _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 local function Make(group, key, text, hold)

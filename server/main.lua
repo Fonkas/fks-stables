@@ -22,7 +22,7 @@ local function Cid(P) return P.cid end
 local function JobOf(P) return P.job end
 
 local function Notify(src, msg, kind)
-    TriggerClientEvent('fks-stables:client:notify', src, { title = _L('stable'), description = msg, type = kind or 'inform' })
+    Bridge.Notify(src, { title = _L('stable'), description = msg, type = kind or 'inform' })
 end
 
 local function Limits(P)
@@ -878,6 +878,10 @@ lib.callback.register('fks-stables:tagRename', function(src, name)
         if ent and ent ~= 0 and DoesEntityExist(ent) then Entity(ent).state:set('fksName', name, true) end
     end
     return true, _L('renamed', name), row.id, name
+end)
+
+lib.callback.register('fks-stables:hasItem', function(src, item)
+    return Bridge.ItemCount(src, item)
 end)
 
 -- The client confirms it is next to the horse; only then the item is consumed

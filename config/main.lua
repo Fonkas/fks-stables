@@ -1,7 +1,7 @@
 Config = Config or {}
 
 -- Server console: "up to date" / "OUTDATED" compared with the version in fxmanifest.lua on GitHub,
--- and a warning (with the download link) when fks-utils is not running
+-- and a warning (with the download link) when fks-utils (required) is not running
 Config.VersionCheck = {
     enabled  = true,
     repo     = 'Fonkas/fks-stables',    -- GitHub "user/repository"
