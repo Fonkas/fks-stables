@@ -108,6 +108,12 @@ local function HorsePrices(coat, age)
     return { amount = sell, currency = cur }, heal
 end
 
+-- a pregnant mare can leave the stable (Config.Breeding.pregnancy.canLeave)
+local function PregnantCanLeave()
+    local P = (Config.Breeding or {}).pregnancy
+    return not P or P.canLeave ~= false
+end
+
 local function FormatHorse(r)
     local coat, breed = FKS.GetCoat(r.coat_id)
     if not coat then return nil end
@@ -135,6 +141,8 @@ local function FormatHorse(r)
         rideable = not bred or age == nil or age >= (F.rideAge or adult),
         agePerSec = Config.Aging.enabled and 1 / (Config.Aging.hoursPerYear * 3600) or 0,
         breedingUntil = breedingUntil, breedWait = breedWait,
+        pregnant = breedingUntil ~= nil and r.gender == 'female',
+        pregnantOut = breedingUntil ~= nil and r.gender == 'female' and PregnantCanLeave(),
         canBreed = coat.canBreed ~= false and not (special and Config.Special and not Config.Special.canBreed)
             and not foal and (age == nil or age >= ((Config.Breeding or {}).minAge or 5)) and not On(r.dead)
             and not breedingUntil and breedWait == 0,
@@ -345,7 +353,9 @@ lib.callback.register('fks-stables:takeOut', function(src, kind, id, stableId)
         return true, FormatWagon(DB.Wagon(id))
     end
     if On(row.dead) then return false, _L('horse_dead') end
-    if (Decode(row.meta, {}).breedingUntil or 0) > os.time() then return false, _L('horse_breeding') end
+    if (Decode(row.meta, {}).breedingUntil or 0) > os.time() and not (row.gender == 'female' and PregnantCanLeave()) then
+        return false, _L('horse_breeding')
+    end
     DB.SetActiveHorse(Cid(P), id)
     DB.UpdateHorse(id, { spawned = 1, stable = stableId })
     return true, FormatHorse(DB.Horse(id))

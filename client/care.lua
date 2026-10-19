@@ -363,8 +363,10 @@ function Care.CleanHooves()
     DropReins()
     local me, horse = Me(), Horse.ped
 
+    -- the horse stays still during the scene: no movement, no reactions (other animals, shots, the player...)
     ClearPedTasksImmediately(horse)
-    FreezeEntityPosition(horse, true) -- the horse does not move during the scene
+    FreezeEntityPosition(horse, true)
+    SetBlockingOfNonTemporaryEvents(horse, true)
     local pos, hd = PlayerStart(horse, an.dict, an.horse, an.player, C.hoof.fallback)
     ClearPedTasksImmediately(me)
     SetEntityCoordsNoOffset(me, pos.x, pos.y, pos.z, false, false, false)
@@ -374,14 +376,25 @@ function Care.CleanHooves()
     TaskPlayAnim(horse, an.dict, an.horse, 8.0, -8.0, -1, 1, 0, false, false, false)
     TaskPlayAnim(me, an.dict, an.player, 8.0, -8.0, -1, 1, 0, false, false, false)
 
+    -- the player is locked in the pose too (walking away broke the scene); only the camera moves
+    FreezeEntityPosition(me, true)
     local stop = GetGameTimer() + (C.hoof.duration or 9000)
-    while GetGameTimer() < stop and HorseOk() do Wait(200) end
+    while GetGameTimer() < stop and HorseOk() do
+        Wait(0)
+        DisableAllControlActions(0)
+        EnableControlAction(0, 0xA987235F, true) -- look left / right
+        EnableControlAction(0, 0xD2047988, true) -- look up / down
+    end
+    FreezeEntityPosition(me, false)
 
     DeleteProp(prop)
     StopAnimTask(me, an.dict, an.player, 1.0)
     ClearPedTasks(me, true, true)
     if HorseOk() then StopAnimTask(horse, an.dict, an.horse, 1.0) ClearPedTasks(horse, true, true) end
-    if DoesEntityExist(horse) then FreezeEntityPosition(horse, false) end
+    if DoesEntityExist(horse) then
+        FreezeEntityPosition(horse, false)
+        SetBlockingOfNonTemporaryEvents(horse, false)
+    end
     RemoveAnimDict(an.dict)
 
     Horse.needs.hoof = 100

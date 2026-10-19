@@ -354,6 +354,7 @@ Locales['fr'] = {
         special = 'Spécial',
         foal = 'Poulain',
         breeding_now = 'Accouplement',
+        pregnant = 'Gestante',
         home_breed = 'Élevage',
         breed_pending = '%s en cours',
         breed_pending_title = 'En cours',

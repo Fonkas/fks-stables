@@ -118,6 +118,12 @@ function Look.ApplyHorse(ped, look)
 
     Look.ApplyCoat(ped, look.coat, look.maneTail)
     Citizen.InvokeNative(N.SetExpression, ped, 41611, look.gender == 'female' and 1.0 or 0.0)
+    -- pregnant mare: belly expressions (Config.Breeding.pregnancy.expressions)
+    if look.pregnant then
+        for _, e in ipairs((((Config.Breeding or {}).pregnancy or {}).expressions) or {}) do
+            Citizen.InvokeNative(N.SetExpression, ped, e[1], (e[2] or 1.0) + 0.0)
+        end
+    end
     Look.Refresh(ped)
 end
 

@@ -54,6 +54,7 @@ Config.Horse = {
     respawnAfterLogin = true,       -- comes back where it was after a relog / crash
     allowTwoRiders = true,
     blockNativePrompts = true,      -- hides the game prompts (Lead, Pat, Flee) and uses the script's, in your language
+    canShootOwn = true,             -- you can aim at / shoot your own horse like any other (false = only the interaction lock-on)
 }
 
 -- Pat: game interaction used (tried in order; with Config.Debug each click uses the next one
@@ -152,6 +153,7 @@ Config.Stash = {
     bagsDelay = 1000,             -- ms of interaction (the player reaches the saddlebag) before switching to the pose
     bagsPose = 'mech_pickup@loot@horse_saddlebags@live@%s', -- pose while the inventory is open (%s = lt / rt)
     bagsPoseClip = 'base',
+    bagsSide = nil,              -- side of the horse the saddlebags open from: nil = both sides | 'right' | 'left'
     -- inventory slots (ox / rsg grid), separate from the weight (storage * gramsPerStorage)
     horseSlots = 8,              -- saddlebag slots of every horse
     wagonSlots = 50,             -- slots of a wagon without its own `slots` in config/wagons.lua
@@ -271,7 +273,7 @@ Config.Feed = {
     sugarcube            = { label = 'Sugar cube',     hunger = 30, thirst = 0,  health = 20,  stamina = 15,  bond = 3 },
     haysnack             = { label = 'Hay cube',       hunger = 50, thirst = 25, health = 30,  stamina = 75,  bond = 4 },
     horse_stimulant      = { label = 'Stimulant',      hunger = 50, thirst = 50, health = 0,   stamina = 100, bond = 0, core = true, gold = { stamina = 10 } },
-    horsegold_stimulant = { label = 'Gold stimulant', hunger = 50, thirst = 50, health = 100, stamina = 100, bond = 0, core = true, gold = { stamina = 10, health = 10 } },
+    horse_gold_stimulant = { label = 'Gold stimulant', hunger = 50, thirst = 50, health = 100, stamina = 100, bond = 0, core = true, gold = { stamina = 10, health = 10 } },
 }
 
 Config.Items = {

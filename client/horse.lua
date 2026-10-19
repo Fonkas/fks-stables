@@ -89,6 +89,21 @@ function Horse.ApplyCourage()
     if fearless then SafeNative(0x1913FE4CBF41C463, Horse.ped, 208, true) end -- (calm mount flag)
 end
 
+-- Config.Horse.canShootOwn: your own horse gets the interaction lock-on when you aim at it (pat, lead...), so the
+-- game never lets you fire. With a gun or a bow in hand that lock-on is turned off on it (PCF 301) and aiming
+-- locks on with the weapon, like any other horse; empty-handed it comes back (the horse prompts need it).
+CreateThread(function()
+    while true do
+        Wait(250)
+        if Config.Horse.canShootOwn ~= false and Exists() then
+            local _, weapon = GetCurrentPedWeapon(Me(), true, 0, true)
+            local armed = weapon ~= nil and weapon ~= 0
+                and (B(Citizen.InvokeNative(0x705BE297EEBDB95D, weapon)) or B(Citizen.InvokeNative(0xC4DEC3CA8C365A5D, weapon))) -- IS_WEAPON_A_GUN / IS_WEAPON_BOW
+            Citizen.InvokeNative(0x1913FE4CBF41C463, Horse.ped, 301, armed) -- PCF_DisableInteractionLockonOnTargetPed
+        end
+    end
+end)
+
 -- foal: size according to age (Config.Foal)
 -- (only for foals born from breeding: d.bred)
 function Horse.ApplyScale()
@@ -174,6 +189,11 @@ local function Setup(ped)
         flags[412] = true -- PCF_BlockHorsePromptsForTargetPed: hides the native Lead / Pat / Flee
         flags[442] = true -- hides the native Flee
     end
+    if Config.Horse.canShootOwn ~= false then
+        -- like any other horse: aiming locks on with the weapon instead of only the interaction menu
+        flags[297] = false -- PCF_ForceInteractionLockonOnTargetPed
+        flags[274] = true  -- PCF_AllowPlayerLockOnIfFriendly (your own horse counts as friendly)
+    end
     for flag, v in pairs(flags) do Citizen.InvokeNative(0x1913FE4CBF41C463, ped, flag, v) end
 
     local player = PlayerId()
@@ -216,7 +236,7 @@ function Horse.Spawn(data, at, fromStable, dead)
 
     Setup(ped)
 
-    Look.ApplyHorse(ped, { outfit = data.outfit, coat = data.coat, maneTail = data.maneTail, components = data.components, gender = data.gender })
+    Look.ApplyHorse(ped, { outfit = data.outfit, coat = data.coat, maneTail = data.maneTail, components = data.components, gender = data.gender, pregnant = data.pregnant })
     Horse.fearless = nil
     Horse.ApplyAttributes()
     SetTimeout(300, Horse.ApplyScale) -- after the look is applied (like county-ranch)
@@ -324,7 +344,7 @@ function Horse.Reapply()
     local data = lib.callback.await('fks-stables:getActive', false, 'horse')
     if data and Exists() and data.id == Horse.id then
         Horse.data = data
-        Look.ApplyHorse(Horse.ped, { outfit = data.outfit, coat = data.coat, maneTail = data.maneTail, components = data.components, gender = data.gender })
+        Look.ApplyHorse(Horse.ped, { outfit = data.outfit, coat = data.coat, maneTail = data.maneTail, components = data.components, gender = data.gender, pregnant = data.pregnant })
         Horse.ApplyAttributes()
         Horse.UpdateLabel()
     end
@@ -392,13 +412,19 @@ function Horse.OpenBags(ent, ownKind, ownId)
     local S = Config.Stash
     local dict, clip
     if DoesEntityExist(ent) and not Horse.IsDown(ent) then
-        if S.bagsInteraction then
+        local pos = GetEntityCoords(me)
+        local side = GetOffsetFromEntityGivenWorldCoords(ent, pos.x, pos.y, pos.z).x < 0 and 'lt' or 'rt'
+        if S.bagsInteraction and side == 'rt' then
             TaskAnimalInteraction(me, ent, joaat(S.bagsInteraction), 0, 0)
             Wait(S.bagsDelay or 1000)
+        elseif side == 'lt' then
+            -- the game's saddlebag interaction is the right-side one (from the left it walked the player around or
+            -- opened the game's own menu, closing the inventory): face the horse and go straight to the left pose
+            ClearPedTasks(me, true, true)
+            TaskTurnPedToFaceEntity(me, ent, 600)
+            Wait(600)
         end
         if S.bagsPose then
-            local pos = GetEntityCoords(me)
-            local side = GetOffsetFromEntityGivenWorldCoords(ent, pos.x, pos.y, pos.z).x < 0 and 'lt' or 'rt'
             local d = S.bagsPose:format(side)
             if LoadAnimDict(d) then
                 dict, clip = d, S.bagsPoseClip or 'base'
@@ -1182,6 +1208,18 @@ AddEventHandler('onResourceStop', function(res)
     if Horse.blip then RemoveBlip(Horse.blip) end
     if Exists() then DeleteEntity(Horse.ped) end
 end)
+
+-- Test (only with Config.Debug = true): /fks_expr <id> <value 0.0-1.0> — sets a metaped expression on your horse
+-- (to find the body / belly ones for Config.Breeding.pregnancy.expressions; 41611 = sex, already used)
+RegisterCommand('fks_expr', function(_, args)
+    if not Config.Debug then return end
+    local id, value = tonumber(args[1]), tonumber(args[2]) or 1.0
+    if not id or not Exists() then return print('[fks-stables] usage: /fks_expr <id> <value> (with your horse out)') end
+    local before = Citizen.InvokeNative(0xFD1BA1EEF7985BB8, Horse.ped, id, Citizen.ResultAsFloat()) -- _GET_CHAR_EXPRESSION
+    Citizen.InvokeNative(0x5653AB26C82938CF, Horse.ped, id, value + 0.0)                            -- _SET_CHAR_EXPRESSION
+    Look.Refresh(Horse.ped)
+    print(('[fks-stables] expression %s: %s -> %s'):format(id, tostring(before), value))
+end, false)
 
 -- Diagnostics: /fks_horse (result in the F8 console) — your horse state for death / revive
 RegisterCommand('fks_horse', function()

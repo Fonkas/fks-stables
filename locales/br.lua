@@ -354,6 +354,7 @@ Locales['br'] = {
         special = 'Especial',
         foal = 'Potro',
         breeding_now = 'Cruzando',
+        pregnant = 'Prenhe',
         home_breed = 'Cruzamento',
         breed_pending = '%s em andamento',
         breed_pending_title = 'Em andamento',

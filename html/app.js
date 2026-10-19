@@ -168,7 +168,7 @@ Views.myHorses = () => {
     if (h.old) badges.push(`<span class="bdg">${esc(L('old'))}</span>`);
     if (h.special) badges.push(`<span class="bdg gold">${esc(L('special'))}</span>`);
     if (h.foal) badges.push(`<span class="bdg">${esc(L('foal'))}</span>`);
-    if (h.breedingUntil) badges.push(`<span class="bdg gold">${esc(L('breeding_now'))}</span>`);
+    if (h.breedingUntil) badges.push(`<span class="bdg gold">${esc(L(h.pregnant ? 'pregnant' : 'breeding_now'))}</span>`);
     if (!h.here) badges.push(`<span class="bdg">${esc(L('elsewhere'))} · ${esc(h.stableLabel)}</span>`);
     const locked = !h.here;
     return {
@@ -200,7 +200,7 @@ Views.myHorses = () => {
                 ${statRow(L('affinity'), ticks(Math.floor(h.affinity || 0), true), h.affinity || 0)}
             </div>
             <div class="actions">
-                ${med('h-take', 'i-take', L('a_take'), { disabled: locked || h.dead || !!h.breedingUntil })}
+                ${med('h-take', 'i-take', L('a_take'), { disabled: locked || h.dead || (!!h.breedingUntil && !h.pregnantOut) })}
                 ${svc('customize') ? med('h-equip', 'i-saddle', L('a_equip'), { disabled: locked }) : ''}
                 ${svc('coloring') && S.data.canColor ? med('h-coat', 'i-palette', L('a_coat'), { disabled: locked }) : ''}
                 ${med('h-heal', 'i-heal', L('a_heal'), { disabled: !(h.dead || h.health < 100) })}
@@ -217,7 +217,7 @@ const breedReason = (h) => {
     if (h.canBreed) return L('breed_ok');
     if (h.special) return L('breed_r_special');
     if (h.foal) return L('breed_r_young');
-    if (h.breedingUntil) return L('breed_r_busy');
+    if (h.breedingUntil) return L(h.pregnant ? 'pregnant' : 'breed_r_busy');
     if (h.breedWait > 0) return L('breed_r_wait', Math.ceil(h.breedWait / 60));
     if (h.dead) return L('injured');
     return L('breed_r_no');

@@ -172,9 +172,12 @@ lib.callback.register('fks-stables:breed', function(src, stableId, motherId, fat
     if not coat then return false end
     DB.InsertBreeding({ citizenid = P.cid, mother = m.id, father = f.id, stable = stableId, coat_id = coat.id,
         gender = math.random(100) <= (Config.Gender.femaleChance or 50) and 'female' or 'male', ready_at = ready })
+    -- the mare is pregnant until the birth (breedingUntil); for both the cooldown (Config.Breeding.cooldown)
+    -- counts from the birth (bredAt) — the stallion is free right away
     for _, row in ipairs({ mRow, fRow }) do
         local meta = SV.Decode(row.meta, {})
-        meta.breedingUntil, meta.bredAt = ready, ready -- the cooldown (Config.Breeding.cooldown) counts from the birth
+        meta.bredAt = ready
+        if row.id == mRow.id then meta.breedingUntil = ready end
         DB.UpdateHorse(row.id, { meta = json.encode(meta) })
     end
     return true, _L('breed_started', m.name, f.name, B.time or 120)

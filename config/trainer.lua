@@ -139,6 +139,13 @@ Config.Breeding = {
     minAge = 5,                     -- minimum age of the parents
     price = 0,                      -- cost (cash)
     foalName = 'Foal',              -- foal name (rename it at the stable)
+    -- the mare is pregnant until the foal is born (the stallion is free right after breeding)
+    pregnancy = {
+        canLeave = true,            -- the pregnant mare can be taken out and ridden (false = stays at the stable)
+        -- belly: metaped expressions applied to the pregnant mare { { id, value }, ... } (value 0.0 - 1.0)
+        -- RDR2 has no documented "pregnant" expression for horses: find one with /fks_expr (Config.Debug)
+        expressions = {},
+    },
 }
 
 Config.Foal = {

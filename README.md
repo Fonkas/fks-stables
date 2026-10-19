@@ -40,6 +40,7 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
 - Tack (saddles, blankets, saddlebags, horns, stirrups, bedrolls, holsters, manes, tails, masks, moustaches).
 - Coat colour editor (body, mane and tail palettes / tints) — trainers only.
 - Wagon customisation: paint, tint, extras, load and lanterns.
+- Six stables ready to use: Blackwater, Valentine, Rhodes, Saint Denis, Strawberry and Tumbleweed.
 - Per-job limits, per-stable services, opening hours and job-restricted stables.
 
 ### Horses
@@ -52,14 +53,15 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
 - **Stimulants with a gold boost**: for a few seconds the stamina (and health) ring turns gold, never drops, and the horse
   ends fully recovered — with a timer on the HUD (see [HUD integration](#hud-integration)).
 - **Courage** (0–10, fearless at 10) and **affinity** (0–10) that grow over time.
-- Saddlebags (only with a bag equipped) with the "hand in the saddlebag" pose, shareable with other players.
+- Saddlebags (only with a bag equipped, from either side of the horse) with the "hand in the saddlebag" pose,
+  shareable with other players. Inventory slots are set apart from the weight (`Config.Stash.horseSlots`).
 - Horse sheet panel (Q) and a title over the horse with its name, XP and age.
 - Death & revive: the body stays in place; revive it with an item (click a dot on the horse you want) or treat it at a
   stable. Whistling for a dead horse brings the body next to you.
 - **Transfer** a horse to another player (hold C), and a **name tag** item to rename the active horse.
 
 ### Wagons
-- Storage with access control, hunting wagons that carry carcasses and pelts.
+- Storage with access control (slots per wagon), hunting wagons that carry carcasses and pelts.
 - **Durability**: wears with kilometres and crashes; at 0 the wheels come off and it needs nails + a hammer.
 - Send the wagon back to its stable from anywhere (optional).
 
@@ -68,13 +70,17 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
 - Server-side zone hosts: one player per zone spawns and keeps the horses inside it; automatic host reassignment and
   cleanup of empty zones. Captured horses are protected from cleanup. NPC horses can never be tamed.
 - **Taming mini-game**: letters fall down the screen — press (or click) them before they reach the bottom.
-- Sale points (map blip): **sell** the tamed horse (cash and/or gold) or **keep** it (pay a % of the shop price, random age).
+- 9 zones across the map ready to use.
+- Sale points (map blip): **sell** the tamed horse (fixed value by class, or a % of the shop price) or **keep** it
+  (pay a % of the shop price, random age). `Config.Wild.allowKeep = false` only allows selling.
 - Sale cooldown and optional Discord webhook logs.
 
 ### Trainer job
 - **Obstacle course**, **lunging** (the horse circles you, XP per minute) and **load training** (deliver a loaded wagon
   against the clock).
 - **Breeding** at the stable with a dedicated camera: pick a female and a male, a foal is born after a while.
+- **Pregnant mares**: only the mare waits for the birth and she can still be taken out and ridden (the stallion is free
+  right away).
 - **Foals** are born small, grow until 5 years old and cannot be ridden until then.
 - Special (gold) horses come fully trained and can be blocked from breeding and from being transferred.
 
@@ -109,7 +115,7 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
 4. **Create the items** in your inventory — see [Items](#items).
 5. **Configure** the script — at least:
    - `config/main.lua` → `Config.Locale`, `Config.Framework` / `Config.Inventory` (`'auto'` detects them).
-   - `config/stables.lua` → your stables (one example is included: Blackwater).
+   - `config/stables.lua` → your stables (six are included — check the coordinates on your map).
    - `config/trainer.lua` → the trainer job name and admin groups.
    - `Config.Wild.zones` → your wild horse zones (the included ones are examples).
 6. **Start the server.** The database tables are created automatically on the first start — no SQL to import.
@@ -146,6 +152,8 @@ Item names are set in `config/main.lua` (`Config.Feed`, `Config.Items`, `Config.
 
 <details>
 <summary><b>VORP</b> — SQL for the <code>items</code> table</summary>
+
+Also in `install/items_vorp.sql`.
 
 ```sql
 INSERT IGNORE INTO `items` (`item`, `label`, `limit`, `can_remove`, `type`, `usable`, `desc`) VALUES
@@ -225,7 +233,7 @@ hammer               = { name = 'hammer',               label = 'Hammer',       
 | `locales/*.lua` | texts in every language |
 
 ### Adding a stable
-Copy the Blackwater block in `config/stables.lua` and change the id, label and coordinates. Every field is commented.
+Copy a stable block in `config/stables.lua` and change the id, label and coordinates. Every field is commented.
 
 ---
 
@@ -295,6 +303,7 @@ All keys can be changed in `Config.Prompts`, `Config.Keys`, `Config.Training` an
 | `/fks_prompts` | everyone | prints the horse prompts state (diagnostics) |
 | `/fks_props` | `Config.Debug` | lists nearby props (find trough / hay models) |
 | `/fks_animal [model] [quality]` | `Config.Debug` | spawns a carcass to test hunting wagons |
+| `/fks_expr <id> <value>` | `Config.Debug` | sets a metaped expression on your horse (find body / belly ones for pregnant mares) |
 | `fks_wildspawn` | `Config.Debug` | spawns wild horses now in your zone (server / chat) |
 
 ---
@@ -391,6 +400,8 @@ fks-stables/
 - Fonts: [Alegreya SC](https://fonts.google.com/specimen/Alegreya+SC), [Alegreya Sans](https://fonts.google.com/specimen/Alegreya+Sans),
   [Alegreya Sans SC](https://fonts.google.com/specimen/Alegreya+Sans+SC) and [Rye](https://fonts.google.com/specimen/Rye) —
   licensed under the [SIL Open Font License 1.1](https://openfontlicense.org).
+- Contributors: [sathishkumar2611](https://github.com/sathishkumar2611) — extra stables, stash slots, wild horse zones
+  and economy, full horse catalogue.
 - Built for the RedM community. Thanks to the Overextended (ox_lib, oxmysql), VORP and RSG teams.
 
 ---
@@ -398,7 +409,7 @@ fks-stables/
 ## Contributing
 
 Issues and pull requests are welcome. Please keep new texts in `locales/` (English is the base language) and test on
-both VORP and RSG when touching `server/bridge.lua`.
+both VORP and RSG (the framework bridge lives in [fks-utils](https://github.com/Fonkas/fks-utils)).
 
 ---
 

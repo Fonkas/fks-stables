@@ -290,7 +290,7 @@ local function FindOwned(kind, id)
 end
 
 local function HorseLook(h)
-    return { outfit = h.outfit, coat = h.coat, maneTail = h.maneTail, components = h.components, gender = h.gender, scale = h.scale }
+    return { outfit = h.outfit, coat = h.coat, maneTail = h.maneTail, components = h.components, gender = h.gender, scale = h.scale, pregnant = h.pregnant }
 end
 
 ---------------------------------------------------------------------------

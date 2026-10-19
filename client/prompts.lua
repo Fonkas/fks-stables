@@ -24,6 +24,16 @@ local function Show(p, on)
     PromptSetEnabled(p, on)
 end
 
+-- is the player on the side of the horse the saddlebags open from? (Config.Stash.bagsSide)
+local function OnBagsSide(ent)
+    local side = Config.Stash.bagsSide
+    if side ~= 'right' and side ~= 'left' then return true end
+    local me = GetEntityCoords(PlayerPedId())
+    local x = GetOffsetFromEntityGivenWorldCoords(ent, me.x, me.y, me.z).x -- > 0 = horse's right
+    if side == 'right' then return x > 0.15 end
+    return x < -0.15
+end
+
 local function Done(p, hold)
     if hold then return PromptHasHoldModeCompleted(p) end
     return PromptHasStandardModeCompleted(p)
@@ -103,7 +113,8 @@ CreateThread(function()
             for ent, t in pairs(targets) do
                 if DoesEntityExist(ent) then
                     local dead = Horse.IsDown(ent)
-                    Show(t.p.bags, onFoot and not dead and t.hasBags)
+                    local bags = onFoot and not dead and t.hasBags and OnBagsSide(ent)
+                    Show(t.p.bags, bags)
                     if t.own then
                         local leading = Care and Care.Leading and Care.Leading()
                         local resting = Care and Care.resting
@@ -121,7 +132,7 @@ CreateThread(function()
                         end
                     end
 
-                    if t.hasBags and Done(t.p.bags) then
+                    if bags and Done(t.p.bags) then
                         local e, own = ent, t.own
                         CreateThread(function() Horse.OpenBags(e, own and 'horse' or nil, own and Horse.id or nil) end)
                         Wait(300)
