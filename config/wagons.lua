@@ -1,8 +1,8 @@
 -- Wagon catalogue: categories, wagons for sale and per-model customisation.
 --[[
     Fields per wagon:
-      model, label, enabled, cash, gold, resale (%), storage (storage capacity),
-      animals (carcasses/pelts it carries), big (big wagon: spawns further away),
+      model, label, enabled, cash, gold, resale (%), storage (storage capacity / weight),
+      slots (inventory slots, ox / rsg; nil = Config.Stash.wagonSlots), animals (carcasses/pelts it carries), big (big wagon: spawns further away),
       jobs/groups (purchase restriction), work ('wood' | 'stone' | 'water' -> work wagon), description
 ]]
 Config.Wagons = {
@@ -20,8 +20,8 @@ Config.Wagons = {
             { model = "chuckwagon000x", label = "Cargo Wagon 4", enabled = true, cash = 2750, gold = 0, resale = 4, storage = 470, animals = 40, big = true, description = "A good wagon for hunting and storage." },
             { model = "gatchuck", label = "Cargo Wagon 5", enabled = true, cash = 1950, gold = 0, resale = 4, storage = 250, animals = 30, big = true, description = "A good wagon for hunting and storage." },
             { model = "utilliwag", label = "Cargo Wagon 6", enabled = true, cash = 2300, gold = 0, resale = 4, storage = 380, animals = 40, big = true, description = "A good wagon for hunting and storage." },
-            { model = "huntercart01", label = "Hunting Wagon 3", enabled = true, cash = 1500, gold = 0, resale = 4, storage = 220, animals = 30, big = true, description = "A good wagon for hunting and storage." },
-            { model = "wagon04x", label = "Hunting Wagon 4", enabled = true, cash = 3000, gold = 0, resale = 4, storage = 400, animals = 50, big = true, description = "A good wagon for hunting and storage." },
+            { model = "huntercart01", label = "Hunting Wagon 3", enabled = true, cash = 1500, gold = 0, resale = 4, storage = 220, slots = 25, animals = 30, big = true, description = "A good wagon for hunting and storage." },
+            { model = "wagon04x", label = "Hunting Wagon 4", enabled = true, cash = 3000, gold = 0, resale = 4, storage = 400, slots = 40, animals = 50, big = true, description = "A good wagon for hunting and storage." },
             { model = "supplywagon", label = "Cargo Wagon 7", enabled = true, cash = 4500, gold = 0, resale = 4, storage = 700, animals = 80, big = true, description = "A good wagon for hunting and storage." },
         },
     },
@@ -29,7 +29,7 @@ Config.Wagons = {
         category = "Work Wagons",
         icon = "work",
         wagons = {
-            { model = "coal_wagon", label = "Stone Wagon", enabled = true, cash = 1000, gold = 0, resale = 4, storage = 500, animals = 0, work = "stone", description = "A good wagon for work and storage." },
+            { model = "coal_wagon", label = "Stone Wagon", enabled = true, cash = 1000, gold = 0, resale = 4, storage = 500, slots = 50, animals = 0, work = "stone", description = "A good wagon for work and storage." },
             { model = "oilWagon01x", label = "Water Tank", enabled = true, cash = 1000, gold = 0, resale = 4, storage = 150, animals = 0, work = "water", description = "A good wagon for work and storage." },
             { model = "wagonPrison01x", label = "Prison Wagon", enabled = true, cash = 0, gold = 20, resale = 4, storage = 0, animals = 0, description = "A good wagon for police work." },
             { model = "logwagon", label = "Lumber Wagon", enabled = true, cash = 1000, gold = 0, resale = 4, storage = 500, animals = 0, work = "wood", description = "A good wagon for work and storage." },
@@ -51,7 +51,7 @@ Config.Wagons = {
             { model = "coach4", label = "Cart 6", enabled = true, cash = 800, gold = 0, resale = 4, storage = 190, animals = 0, description = "A good wagon for travelling and storage." },
             { model = "coach5", label = "Cart 7", enabled = true, cash = 900, gold = 0, resale = 4, storage = 190, animals = 0, description = "A good wagon for travelling and storage." },
             { model = "coach6", label = "Cart 8", enabled = true, cash = 950, gold = 0, resale = 4, storage = 200, animals = 0, description = "A good wagon for travelling and storage." },
-            { model = "stagecoach001x", label = "Cart 9", enabled = true, cash = 1400, gold = 0, resale = 4, storage = 290, animals = 0, description = "A good wagon for travelling and storage." },
+            { model = "stagecoach001x", label = "Cart 9", enabled = true, cash = 1400, gold = 0, resale = 4, storage = 290, slots = 30, animals = 0, description = "A good wagon for travelling and storage." },
             { model = "stagecoach002x", label = "Cart 10", enabled = true, cash = 1400, gold = 0, resale = 4, storage = 290, animals = 0, description = "A good wagon for travelling and storage." },
             { model = "stagecoach003x", label = "Cart 11", enabled = true, cash = 900, gold = 0, resale = 4, storage = 180, animals = 0, description = "A good wagon for travelling and storage." },
             { model = "stagecoach005x", label = "Cart 12", enabled = true, cash = 1150, gold = 0, resale = 4, storage = 250, animals = 0, description = "A good wagon for travelling and storage." },

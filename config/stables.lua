@@ -1,4 +1,4 @@
--- Stables. Only one example is included — copy the block below to add your own stables.
+-- Stables: Blackwater, Valentine, Rhodes, Saint Denis, Strawberry and Tumbleweed — copy a block to add your own.
 -- Coordinates are { x, y, z, heading }. Tip: stand where you want a point and use your coords command
 -- (or /fks_coords if you add one) to copy the position.
 
@@ -42,5 +42,80 @@ Config.Stables = {
             buyWagons = true,               -- wagon shop
             customizeWagons = true,         -- wagon paint, extras, load, lanterns
         },
+    },
+    {
+        id = 'valentine',
+        label = 'Valentine Stables',
+        blip = true,
+        npc = { model = 'u_m_m_bwmstablehand_01', coords = { -366.26, 790.76, 115.2, 187.53 } },
+        camera = { -366.0, 788.0, 117.0, 277.88 },
+        preview = { -368.52, 786.96, 115.16, 277.88 },
+        spawn = { -353.46, 797.47, 116.17, 181.14 },
+        breed = {
+            camera = { -368.52, 786.96, 118.16, 277.88 },
+            left = { -368.52, 788.96, 115.16, 97.88 },
+            right = { -366.52, 788.96, 115.16, 97.88 },
+        },
+        services = { buyHorses = true, customize = true, transfer = true, buyWagons = false, customizeWagons = false, breeding = false },
+    },
+    {
+        id = 'rhodes',
+        label = 'Rhodes Stables',
+        blip = true,
+        npc = { model = 'u_m_m_bwmstablehand_01', coords = { 1211.71, -191.07, 100.47, 118.85 } },
+        camera = { 1211.7, -192.6, 101.4, 10.14 },
+        preview = { 1209.35, -192.60, 100.38, 10.14 },
+        spawn = { 1206.04, -173.15, 101.03, 351.21 },
+        breed = {
+            camera = { 1209.35, -192.60, 103.38, 10.14 },
+            left = { 1207.35, -190.60, 100.38, 190.14 },
+            right = { 1211.35, -190.60, 100.38, 190.14 },
+        },
+        services = { buyHorses = true, customize = true, transfer = true, buyWagons = false, customizeWagons = false, breeding = false },
+    },
+    {
+        id = 'saintdenis',
+        label = 'Saint Denis Stables',
+        blip = true,
+        npc = { model = 'u_m_m_bwmstablehand_01', coords = { 2506.05, -1459.82, 45.32, 96.34 } },
+        camera = { 2504.0, -1456.0, 47.0, 179.25 },
+        preview = { 2503.22, -1454.04, 45.31, 179.25 },
+        spawn = { 2506.05, -1459.82, 46.32, 96.34 },
+        breed = {
+            camera = { 2503.22, -1454.04, 48.31, 179.25 },
+            left = { 2501.22, -1456.04, 45.31, 359.25 },
+            right = { 2505.22, -1456.04, 45.31, 359.25 },
+        },
+        services = { buyHorses = true, customize = true, transfer = true, buyWagons = true, customizeWagons = true, breeding = true },
+    },
+    {
+        id = 'strawberry',
+        label = 'Strawberry Stables',
+        blip = true,
+        npc = { model = 'u_m_m_bwmstablehand_01', coords = { -1819.25, -564.85, 156.06, 347.82 } },
+        camera = { -1818.0, -563.0, 156.0, 257.78 },
+        preview = { -1819.83, -561.63, 155.06, 257.78 },
+        spawn = { -1819.83, -561.63, 155.06, 257.78 },
+        breed = {
+            camera = { -1819.83, -561.63, 158.06, 257.78 },
+            left = { -1819.83, -559.63, 155.06, 77.78 },
+            right = { -1817.83, -559.63, 155.06, 77.78 },
+        },
+        services = { buyHorses = true, customize = true, transfer = true, buyWagons = true, customizeWagons = true, breeding = true },
+    },
+    {
+        id = 'tumbleweed',
+        label = 'Tumbleweed Stables',
+        blip = true,
+        npc = { model = 'u_m_m_bwmstablehand_01', coords = { -5515.22, -3040.04, -3.3, 173.00 } },
+        camera = { -5516.31, -3043.94, -2.39, 108.21 },
+        preview = { -5520.46, -3044.38, -3.1, 100.52 },
+        spawn = { -5497.81, -3058.42, -3.09, 198.97 },
+        breed = {
+            camera = { -5515.22, -3040.04, 0.61, 173.00 },
+            left = { -5517.22, -3040.04, -2.39, 353.00 },
+            right = { -5513.22, -3040.04, -2.39, 353.00 },
+        },
+        services = { buyHorses = true, customize = true, transfer = true, buyWagons = false, customizeWagons = false, breeding = false },
     },
 }

@@ -163,7 +163,7 @@ local function FormatWagon(r)
     if base <= 0 then base, cur = w.gold, 'gold' end
     return {
         id = r.id, name = r.name, model = r.model, label = w.label, category = category,
-        storage = w.storage, animals = w.animals, work = w.work, big = w.big,
+        storage = w.storage, slots = w.slots or Config.Stash.wagonSlots, animals = w.animals, work = w.work, big = w.big,
         health = r.health, broken = r.health <= Config.Wagon.brokenAt, active = On(r.active), spawned = On(r.spawned),
         stable = r.stable, stableLabel = s and s.label or r.stable,
         custom = Decode(r.custom, {}), position = Decode(r.position, nil),
@@ -196,7 +196,7 @@ local function BuildShop(src, P)
         for _, w in ipairs(cat.wagons) do
             if w.enabled and (w.cash > 0 or w.gold > 0) and HasAccess(src, P, w.jobs, w.groups) then
                 list[#list + 1] = {
-                    model = w.model, label = w.label, cash = w.cash, gold = w.gold, storage = w.storage,
+                    model = w.model, label = w.label, cash = w.cash, gold = w.gold, storage = w.storage, slots = w.slots or Config.Stash.wagonSlots,
                     animals = w.animals, work = w.work, big = w.big, description = w.description,
                 }
             end
@@ -732,18 +732,23 @@ RegisterNetEvent('fks-stables:server:openStash', function(netId, ownKind, ownId)
     if not e then return end
     local row, P = e.row, e.P
 
-    local storage
+    -- slots (ox / rsg grid) are separate from the weight: horses Config.Stash.horseSlots, wagons their own slots (config/wagons.lua)
+    local S = Config.Stash
+    local storage, slots
     if e.kind == 'wagon' then
         if not CanUseWagon(P, row, WagonMeta(row)) then return Notify(src, _L('no_access_storage'), 'error') end
         local w = FKS.GetWagon(row.model); storage = w and w.storage or 0
+        slots = w and w.slots or S.wagonSlots
     else
-        if Config.Stash.ownerOnly and (not P or row.citizenid ~= Cid(P)) then return Notify(src, _L('not_owner'), 'error') end
+        if S.ownerOnly and (not P or row.citizenid ~= Cid(P)) then return Notify(src, _L('not_owner'), 'error') end
         local c = FKS.GetCoat(row.coat_id); storage = c and c.storage or 0
+        slots = S.horseSlots
     end
     if storage <= 0 then return Notify(src, _L('no_storage'), 'error') end
+    slots = slots or math.min(storage, S.maxSlots or 50)
 
     if not Bridge.Inv() then return Notify(src, _L('no_inventory'), 'error') end
-    Bridge.OpenStash(src, StashId(e.kind, e.id), row.name, math.min(storage, Config.Stash.maxSlots), storage * Config.Stash.gramsPerStorage, storage)
+    Bridge.OpenStash(src, StashId(e.kind, e.id), row.name, slots, storage * S.gramsPerStorage, storage)
 end)
 
 ---------------------------------------------------------------------------
@@ -1077,12 +1082,27 @@ local function WildQuote(t)
     if not coat or (cash <= 0 and gold <= 0) then cash = W.unknownValue or 0 end
     local wild = coat and coat.wild or {}
     local z = Config.Wild.zones[t.zone or 0] or {}
+
+    -- sell value: fixed by class (Config.Wild.sellPrice, tier I = min ... tier IV = max) or % of the coat price
+    local sellCash
+    local P = W.sellPrice
+    if type(P) == 'table' then
+        local lo, hi = tonumber(P.min) or 0, tonumber(P.max) or tonumber(P.min) or 0
+        if coat and coat.tier then
+            sellCash = math.floor(lo + (hi - lo) * (FKS.Clamp((tonumber(coat.tier) or 1) - 1, 0, 3) / 3))
+        else
+            sellCash = lo + math.abs(tonumber(t.model) or 0) % (hi - lo + 1) -- unknown model: steady value in the range
+        end
+    else
+        sellCash = math.floor(cash * (W.sellPercent or 0) / 100)
+    end
+
     return {
         coat = coat, label = coat and (breed .. ' · ' .. coat.label) or _L('wild_title'),
-        sell = { cash = math.floor(cash * (W.sellPercent or 0) / 100), gold = math.floor(gold * (W.sellGoldPercent or 0) / 100) },
+        sell = { cash = sellCash, gold = math.floor(gold * (W.sellGoldPercent or 0) / 100) },
         keep = { cash = math.floor(cash * (W.keepPercent or 0) / 100), gold = math.floor(gold * (W.keepGoldPercent or 0) / 100) },
         canSell = wild.sell ~= false,
-        canKeep = coat ~= nil and wild.save ~= false,
+        canKeep = W.allowKeep ~= false and coat ~= nil and wild.save ~= false,
         age = z.age or W.keepAge,
     }
 end
