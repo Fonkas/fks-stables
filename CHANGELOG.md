@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0
+
+- **The stable menu is now drawn by fks-core** (shared FKS UI). fks-stables no longer ships its own HTML, CSS, JS or
+  fonts, so the server runs one NUI for every FKS script and the look follows `Config.Theme` in fks-core.
+  The horse sheet, the revive dot picker and the taming letters are drawn by fks-core too.
+- **Requires fks-core 2.1.0+.**
+- Same screens and flow as before (home, horse / wagon shop, my horses / wagons, breeding, tack, coat and wagon
+  customisation). The menu icons moved from `html/` to `img/`.
+
 ## 1.2.0
 
 - **New stables:** Valentine, Rhodes, Saint Denis, Strawberry and Tumbleweed (6 in total). *(sathishkumar2611)*

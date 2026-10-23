@@ -927,7 +927,6 @@ end
 --  3. walks to the horse, the server consumes the item and the horse's owner stands it up.
 ---------------------------------------------------------------------------
 local RV = Config.Revive
-local picking = nil -- { done, chosen }
 Horse.selecting, Horse.reviving = false, false
 
 local function HorseName(ent)
@@ -959,13 +958,6 @@ local function BodyPos(ent)
     return GetEntityCoords(ent) + vector3(0.0, 0.0, RV.offsetZ or 0.3)
 end
 
-RegisterNUICallback('pickHorse', function(d, cb)
-    cb({})
-    if not picking then return end
-    picking.chosen = not d.cancel and tonumber(d.id) or nil
-    picking.done = true
-end)
-
 function Horse.ReviveSelect()
     if Horse.selecting or Horse.reviving or Stable.open or Horse.cardOpen then return end
     local me = Me()
@@ -973,30 +965,20 @@ function Horse.ReviveSelect()
     if #DeadHorses() == 0 then return Notify(_L('no_dead_horse'), 'error') end
 
     Horse.selecting = true
-    local pick = { done = false }
-    picking = pick
-    SetNuiFocus(true, true)
     CreateThread(function()
-        local limit, list = GetGameTimer() + (RV.timeout or 30) * 1000, {}
-        while not pick.done do
+        -- fks-core draws a dot on each dead horse (refreshed every 100 ms) and returns the one clicked
+        local list = {}
+        local picked = UI.Pick({ hint = _L('revive_choose'), timeout = RV.timeout or 30 }, function()
+            if Stable.open then return nil end
             list = DeadHorses()
-            me = Me()
-            if #list == 0 or GetGameTimer() > limit or B(IsEntityDead(me)) or Stable.open then break end
-            local dots = {}
-            for _, ent in ipairs(list) do
-                local p = BodyPos(ent)
-                local on, sx, sy = GetScreenCoordFromWorldCoord(p.x, p.y, p.z)
-                if on then dots[#dots + 1] = { id = ent, x = sx, y = sy, name = HorseName(ent) } end
-            end
-            SendNUIMessage({ action = 'pick', show = true, dots = dots, hint = _L('revive_choose') })
-            Wait(100)
-        end
-        SetNuiFocus(false, false)
-        SendNUIMessage({ action = 'pick', show = false })
-        picking, Horse.selecting = nil, false
+            local points = {}
+            for _, ent in ipairs(list) do points[#points + 1] = { id = ent, coords = BodyPos(ent), label = HorseName(ent) } end
+            return points
+        end)
+        Horse.selecting = false
 
         local chosen
-        for _, ent in ipairs(list) do if ent == pick.chosen then chosen = ent end end
+        for _, ent in ipairs(list) do if picked and ent == math.floor(picked) then chosen = ent end end
         if chosen and DoesEntityExist(chosen) then
             Horse.ReviveAt(chosen)
         else
@@ -1098,10 +1080,54 @@ local function CardData()
     }
 end
 
+-- the sheet as an fks-core side card (UI.Sheet)
+local function CardView()
+    local h, T = CardData(), _LU
+    local s, lv = h.stats or {}, h.live or {}
+    local handling = s.handling or 2
+    local meta = (h.age and ('%s %s'):format(h.age, T('years')) or '') .. (h.old and (' · ' .. T('old')) or '')
+    return {
+        eyebrow = T('card_title'):upper(), title = h.name, subtitle = ('%s · %s'):format(h.breed, h.coat),
+        hints = { { 'Q', T('close') } },
+        body = {
+            { type = 'row', align = 'center', children = {
+                { type = 'tier', label = T('tier'), value = ({ 'I', 'II', 'III', 'IV' })[h.tier] or tostring(h.tier or '-'), text = meta },
+                { type = 'facts', items = { { icon = h.gender == 'female' and 'female' or 'male', text = '' } } },
+            } },
+            { type = 'grid', template = 'auto 1fr', children = {
+                { type = 'ring', value = math.min(1, (h.xp or 0) / math.max(1, h.xpMax or 1)), label = T('training') },
+                { type = 'kv', items = {
+                    { label = T('bond'), rating = h.bond or 0, max = 4, icon = 'shoe' },
+                    { label = 'XP', value = ('%d / %d'):format(h.xp or 0, h.xpMax or 0) },
+                    { label = T('bags'), value = h.storage or 0 },
+                    { label = T('pelts'), value = h.pelts or 0 },
+                    { label = T('courage'), value = ('%s / 10'):format(h.courage or 0) },
+                    { label = T('affinity'), value = ('%s / 10'):format(h.affinity or 0) },
+                } },
+            } },
+            { type = 'section', label = T('card_breed_stats') },
+            { type = 'stats', rows = {
+                { label = T('speed'), value = s.speed or 0 }, { label = T('accel'), value = s.accel or 0 },
+                { label = T('health'), value = s.health or 0 }, { label = T('stamina'), value = s.stamina or 0 },
+                { label = T('handling'), value = handling * 2.5, tone = 'gold', text = T('handling_' .. handling) },
+            } },
+            { type = 'section', label = T('card_condition') },
+            { type = 'stats', rows = {
+                { label = T('health'), kind = 'bar', value = lv.health or 0, tone = 'red', text = lv.health or 0 },
+                { label = T('stamina'), kind = 'bar', value = lv.stamina or 0, tone = 'amber', text = lv.stamina or 0 },
+                { label = T('hunger'), kind = 'bar', value = lv.hunger or 0, text = lv.hunger or 0 },
+                { label = T('thirst'), kind = 'bar', value = lv.thirst or 0, tone = 'blue', text = lv.thirst or 0 },
+                { label = T('clean'), kind = 'bar', value = lv.clean or 0, text = lv.clean or 0 },
+                { label = T('hooves'), kind = 'bar', value = lv.hoof or 0, tone = 'amber', text = lv.hoof or 0 },
+            } },
+        },
+    }
+end
+
 function Horse.CloseCard()
     if not Horse.cardOpen then return end
     Horse.cardOpen = false
-    SendNUIMessage({ action = 'card', show = false })
+    UI.Sheet('horse', false)
 end
 
 local CLOSE_KEYS = { 0x31219490, 0xDE794E3E, 0x156F7119, 0x4A903C11 } -- Q (focused), Q (on foot), Backspace, ESC
@@ -1109,7 +1135,7 @@ local CLOSE_KEYS = { 0x31219490, 0xDE794E3E, 0x156F7119, 0x4A903C11 } -- Q (focu
 function Horse.Card()
     if not Horse.data or not Exists() or Horse.cardOpen then return end
     Horse.cardOpen = true
-    SendNUIMessage({ action = 'card', show = true, horse = CardData(), locale = LocaleUI })
+    UI.Sheet('horse', CardView())
     CreateThread(function()
         Wait(400) -- ignore the Q that opened the sheet
         local limit, nextUpdate = GetGameTimer() + 30000, 0
@@ -1125,7 +1151,7 @@ function Horse.Card()
                     or #(GetEntityCoords(Me()) - GetEntityCoords(Horse.ped)) > 8.0 then
                     Horse.CloseCard()
                 else
-                    SendNUIMessage({ action = 'card', show = true, horse = CardData(), locale = LocaleUI })
+                    UI.Sheet('horse', CardView())
                 end
             end
         end

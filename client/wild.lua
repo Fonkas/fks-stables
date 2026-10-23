@@ -11,7 +11,7 @@ Wild = { horse = nil, netId = nil, taming = false }
 local C = Config.Wild
 local Z = C.zones or {}
 local retry = {}         -- [entity] = GetGameTimer() from which you can try again
-local tameResult = nil   -- mini-game answer (NUI)
+
 
 local function Notify(msg, kind) Bridge.Notify({ title = _L('wild_title'), description = msg, type = kind or 'inform' }) end
 local function B(v) return v == true or v == 1 end
@@ -288,10 +288,6 @@ local function Throw(horse)
     end
 end
 
-RegisterNUICallback('tameResult', function(d, cb)
-    cb({})
-    tameResult = d.ok == true
-end)
 
 local function StartTaming(horse)
     Wild.taming = true
@@ -299,23 +295,24 @@ local function StartTaming(horse)
     local netId = NetOf(horse)
     TriggerServerEvent('fks-stables:server:wildStart', netId, GetEntityModel(horse))
 
-    tameResult = nil
-    SetNuiFocus(true, true)
-    SendNUIMessage({
-        action = 'tame', show = true,
+    Notify(_L('wild_hint'))
+    -- fell off (the game itself may throw them), died or the horse disappeared: failed
+    local running = true
+    CreateThread(function()
+        while running do
+            Wait(100)
+            if GetMount(me) ~= horse or B(IsEntityDead(me)) or not DoesEntityExist(horse) then
+                UI.Minigame(false)
+                break
+            end
+        end
+    end)
+    -- falling letters drawn by fks-core; blocks until passed (true) or failed (false)
+    local tameResult = UI.Minigame('keys', {
         duration = C.duration * 1000, spawnEvery = C.spawnEvery, spawnEveryEnd = C.spawnEveryEnd,
         fallTime = C.fallTime, letters = C.letters,
     })
-    Notify(_L('wild_hint'))
-    while tameResult == nil do
-        Wait(100)
-        -- fell off (the game itself may throw them), died or the horse disappeared: failed
-        if GetMount(me) ~= horse or B(IsEntityDead(me)) or not DoesEntityExist(horse) then
-            tameResult = false
-            SendNUIMessage({ action = 'tame', show = false })
-        end
-    end
-    SetNuiFocus(false, false)
+    running = false
 
     if tameResult and lib.callback.await('fks-stables:wildTamed', false, netId) then
         Control(horse)
@@ -470,5 +467,5 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     for _, b in ipairs(blips) do RemoveBlip(b) end
     if pOpen then PromptDelete(pOpen) end
-    if Wild.taming then SetNuiFocus(false, false) end
+    -- the minigame is fks-core's: it closes by itself when this resource stops
 end)

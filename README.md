@@ -92,7 +92,7 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
 |---|---|
 | Server | RedM with **OneSync** enabled |
 | Libraries | [ox_lib](https://github.com/overextended/ox_lib), [oxmysql](https://github.com/overextended/oxmysql) |
-| FKS base | [fks-utils](https://github.com/Fonkas/fks-utils) **1.1.0 or newer** (VORP / RSG bridge, notifications, progress bar) |
+| FKS base | [fks-core](https://github.com/Fonkas/fks-core) **2.1.0 or newer** (VORP / RSG bridge, shared UI, notifications, progress bar) |
 | Framework | [vorp_core](https://github.com/VORPCORE/vorp-core-lua) **or** [rsg-core](https://github.com/Rexshack-RedM/rsg-core) |
 | Inventory | `vorp_inventory`, `rsg-inventory` or `ox_inventory` |
 
@@ -109,7 +109,7 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
    ensure oxmysql
    ensure vorp_core        # or rsg-core
    ensure vorp_inventory   # or rsg-inventory / ox_inventory
-   ensure fks-utils
+   ensure fks-core
    ensure fks-stables
    ```
 4. **Create the items** in your inventory — see [Items](#items).
@@ -371,7 +371,7 @@ fks-stables/
 ├── shared/          catalogue indexes, helpers and the locale loader
 ├── config/          everything you can change (see Configuration)
 ├── locales/         en, pt, br, es, fr, de, it
-├── html/            stable menu (NUI): page, styles, script, fonts and icons
+├── img/             stable menu icons (the menu itself is drawn by fks-core)
 ├── fxmanifest.lua
 ├── LICENSE
 └── README.md
@@ -381,8 +381,8 @@ fks-stables/
 
 ## Troubleshooting
 
-- **`MISSING REQUIRED DEPENDENCY: fks-utils`** — download [fks-utils](https://github.com/Fonkas/fks-utils) and add
-  `ensure fks-utils` before `ensure fks-stables`.
+- **`MISSING REQUIRED DEPENDENCY: fks-core`** — download [fks-core](https://github.com/Fonkas/fks-core) and add
+  `ensure fks-core` before `ensure fks-stables`.
 - **Nothing happens / no prompts** — check the server console line `[fks-stables] framework: ... | inventory: ...`.
   If one is `nil`, set `Config.Framework` / `Config.Inventory`.
 - **Items do nothing** — the item has to exist in your inventory with the same name as in the config, and be usable.
@@ -397,9 +397,7 @@ fks-stables/
 
 ## Credits
 
-- Fonts: [Alegreya SC](https://fonts.google.com/specimen/Alegreya+SC), [Alegreya Sans](https://fonts.google.com/specimen/Alegreya+Sans),
-  [Alegreya Sans SC](https://fonts.google.com/specimen/Alegreya+Sans+SC) and [Rye](https://fonts.google.com/specimen/Rye) —
-  licensed under the [SIL Open Font License 1.1](https://openfontlicense.org).
+- Interface: drawn by [fks-core](https://github.com/Fonkas/fks-core) (fonts and their licenses live there).
 - Contributors: [sathishkumar2611](https://github.com/sathishkumar2611) — extra stables, stash slots, wild horse zones
   and economy, full horse catalogue.
 - Built for the RedM community. Thanks to the Overextended (ox_lib, oxmysql), VORP and RSG teams.
@@ -409,7 +407,7 @@ fks-stables/
 ## Contributing
 
 Issues and pull requests are welcome. Please keep new texts in `locales/` (English is the base language) and test on
-both VORP and RSG (the framework bridge lives in [fks-utils](https://github.com/Fonkas/fks-utils)).
+both VORP and RSG (the framework bridge lives in [fks-core](https://github.com/Fonkas/fks-core)).
 
 ---
 

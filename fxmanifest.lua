@@ -7,13 +7,13 @@ lua54 'yes'
 name 'fks-stables'
 author 'FKS'
 description 'Stables, horses, wagons, wild horse taming, training and breeding for RedM (VORP / RSG)'
-version '1.2.0'
+version '1.3.0'
 license 'GPL-3.0-or-later'
-fks_utils_version '1.1.0' -- minimum fks-utils version (VORP / RSG bridge, notifications, progress bar)
+fks_core_version '2.1.0' -- minimum fks-core version (VORP / RSG bridge, shared UI, notifications, progress bar)
 
 shared_scripts {
     '@ox_lib/init.lua',
-    '@fks-utils/import.lua',
+    '@fks-core/import.lua',
     'config/main.lua',
     'config/horses.lua',
     'config/wagons.lua',
@@ -29,6 +29,7 @@ shared_scripts {
 client_scripts {
     'client/appearance.lua',
     'client/stable.lua',
+    'client/menu.lua',        -- stable menu screens (drawn by fks-core)
     'client/horse.lua',
     'client/wagon.lua',
     'client/care.lua',
@@ -45,21 +46,12 @@ server_scripts {
     'server/trainer.lua',
 }
 
-ui_page 'html/index.html'
-
+-- the interface is drawn by fks-core (shared FKS UI); only the menu icons live here
 files {
-    'html/index.html',
-    'html/style.css',
-    'html/app.js',
-    'html/panel.png',
-    'html/horseicon.png',
-    'html/horseicon2.png',
-    'html/wagonicon.png',
-    'html/wagonicon2.png',
-    'html/fonts/*.woff2',
+    'img/*.png',
 }
 
--- + fks-utils (required: VORP / RSG bridge, notifications, progress bar) - https://github.com/Fonkas/fks-utils
+-- + fks-core 2.1.0+ (required: VORP / RSG bridge, shared UI, notifications, progress bar) - https://github.com/Fonkas/fks-core
 --   not listed below so that, when it is missing, the server console shows the download link (server/version.lua)
 -- + a framework (rsg-core or vorp_core) and an inventory (ox_inventory, rsg-inventory or vorp_inventory)
 dependencies {
