@@ -116,7 +116,7 @@ Config.Prompts = {
     --   49 = HORSE_BRUSH · 50 = HORSE_FEED
     -- Do NOT add 5 (HORSEINTERACT) nor 52 (ANIMAL_INTERACT): they disable the G control and "Drink" disappears.
     -- The native Pat / Lead / Flee are already hidden by horse flag 412 (Config.Horse.blockNativePrompts).
-    hideNative = { 11, 27, 33, 35, 49, 50 },
+    hideNative = { 11, 27, 33, 49, 50 },
     -- the same, applied straight to your horse when it spawns (this is what hides the generic "Show Info")
     --   28 = HORSE_ITEMS · 45/46 = HORSE_WEAPONS
     hideForHorse = { 11, 27, 28, 33, 35, 45, 46, 49, 50 },
