@@ -219,7 +219,7 @@ end
 ---------------------------------------------------------------------------
 -- Read
 ---------------------------------------------------------------------------
-lib.callback.register('fks-stables:getData', function(src, stableId, withShop)
+Callback.Register('fks-stables:getData', function(src, stableId, withShop)
     local P = GetP(src); if not P then return nil end
     local stable = StableAccess(src, P, stableId)
     if not stable then return { denied = true } end
@@ -261,7 +261,7 @@ lib.callback.register('fks-stables:getData', function(src, stableId, withShop)
     return data
 end)
 
-lib.callback.register('fks-stables:getActive', function(src, kind)
+Callback.Register('fks-stables:getActive', function(src, kind)
     local P = GetP(src); if not P then return nil end
     local row
     if kind == 'wagon' then row = DB.ActiveWagon(Cid(P)) else row = DB.ActiveHorse(Cid(P)) end
@@ -273,7 +273,7 @@ end)
 ---------------------------------------------------------------------------
 -- Purchases
 ---------------------------------------------------------------------------
-lib.callback.register('fks-stables:buyHorse', function(src, stableId, coatId, currency, gender, name)
+Callback.Register('fks-stables:buyHorse', function(src, stableId, coatId, currency, gender, name)
     local P = GetP(src); if not P then return false end
     local stable = StableAccess(src, P, stableId)
     if not stable or not stable.services.buyHorses then return false, _L('no_access') end
@@ -306,7 +306,7 @@ lib.callback.register('fks-stables:buyHorse', function(src, stableId, coatId, cu
     return true, _L('bought_horse', name), id
 end)
 
-lib.callback.register('fks-stables:buyWagon', function(src, stableId, model, currency, name)
+Callback.Register('fks-stables:buyWagon', function(src, stableId, model, currency, name)
     local P = GetP(src); if not P then return false end
     local stable = StableAccess(src, P, stableId)
     if not stable or not stable.services.buyWagons then return false, _L('no_access') end
@@ -338,7 +338,7 @@ local function Owned(P, kind, id)
 end
 
 -- Take out of the stable (becomes active and "out")
-lib.callback.register('fks-stables:takeOut', function(src, kind, id, stableId)
+Callback.Register('fks-stables:takeOut', function(src, kind, id, stableId)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, kind, id); if not row then return false, _L('not_owner') end
     if not StableAccess(src, P, stableId) then return false, _L('no_access') end
@@ -361,7 +361,7 @@ lib.callback.register('fks-stables:takeOut', function(src, kind, id, stableId)
     return true, FormatHorse(DB.Horse(id))
 end)
 
-lib.callback.register('fks-stables:sell', function(src, kind, id)
+Callback.Register('fks-stables:sell', function(src, kind, id)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, kind, id); if not row then return false, _L('not_owner') end
     local data
@@ -374,7 +374,7 @@ lib.callback.register('fks-stables:sell', function(src, kind, id)
 end)
 
 -- Heal at the stable: a dead horse is healed and stored at the stable where it was paid
-lib.callback.register('fks-stables:heal', function(src, id, stableId)
+Callback.Register('fks-stables:heal', function(src, id, stableId)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, 'horse', id); if not row then return false, _L('not_owner') end
     local h = FormatHorse(row)
@@ -389,7 +389,7 @@ lib.callback.register('fks-stables:heal', function(src, id, stableId)
     return true, _L('healed', row.name)
 end)
 
-lib.callback.register('fks-stables:repair', function(src, id)
+Callback.Register('fks-stables:repair', function(src, id)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, 'wagon', id); if not row then return false, _L('not_owner') end
     local ok, err = Charge(P, 'cash', Config.Wagon.repairPrice, 'fks-stables:repair')
@@ -399,7 +399,7 @@ lib.callback.register('fks-stables:repair', function(src, id)
 end)
 
 -- Repair a broken wagon on the spot: needs all items in Config.Wagon.brokenRepair ("keep" ones are not consumed)
-lib.callback.register('fks-stables:wagonFix', function(src)
+Callback.Register('fks-stables:wagonFix', function(src)
     local P = GetP(src); if not P then return false end
     local id = WagonOut[src]; if not id then return false, _L('no_active_wagon') end
     local row = Owned(P, 'wagon', id); if not row then return false, _L('not_owner') end
@@ -418,7 +418,7 @@ lib.callback.register('fks-stables:wagonFix', function(src)
     return true
 end)
 
-lib.callback.register('fks-stables:rename', function(src, kind, id, name)
+Callback.Register('fks-stables:rename', function(src, kind, id, name)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, kind, id); if not row then return false, _L('not_owner') end
     name = CleanName(name); if not name then return false, _L('invalid_name') end
@@ -428,7 +428,7 @@ lib.callback.register('fks-stables:rename', function(src, kind, id, name)
     return true, _L('renamed', name)
 end)
 
-lib.callback.register('fks-stables:transfer', function(src, kind, id, to)
+Callback.Register('fks-stables:transfer', function(src, kind, id, to)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, kind, id); if not row then return false, _L('not_owner') end
     local dest = StableAccess(src, P, to); if not dest or to == row.stable then return false, _L('no_access') end
@@ -439,7 +439,7 @@ lib.callback.register('fks-stables:transfer', function(src, kind, id, to)
 end)
 
 -- Tack: price = sum of the changed categories
-lib.callback.register('fks-stables:saveComponents', function(src, id, comps)
+Callback.Register('fks-stables:saveComponents', function(src, id, comps)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, 'horse', id); if not row then return false, _L('not_owner') end
     if type(comps) ~= 'table' then return false end
@@ -465,7 +465,7 @@ local function ValidTint(t)
     return out
 end
 
-lib.callback.register('fks-stables:saveCoat', function(src, id, coat, maneTail)
+Callback.Register('fks-stables:saveCoat', function(src, id, coat, maneTail)
     local P = GetP(src); if not P then return false end
     if not IsTrainer(src, P) then return false, _L('no_permission') end
     local row = Owned(P, 'horse', id); if not row then return false, _L('not_owner') end
@@ -477,7 +477,7 @@ lib.callback.register('fks-stables:saveCoat', function(src, id, coat, maneTail)
     return true, _L('saved')
 end)
 
-lib.callback.register('fks-stables:saveWagonCustom', function(src, id, c)
+Callback.Register('fks-stables:saveWagonCustom', function(src, id, c)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, 'wagon', id); if not row then return false, _L('not_owner') end
     if type(c) ~= 'table' then return false end
@@ -629,7 +629,7 @@ local function HorseByNet(src, netId)
     end
 end
 
-lib.callback.register('fks-stables:reviveHorse', function(src, netId, ownId)
+Callback.Register('fks-stables:reviveHorse', function(src, netId, ownId)
     local item = Config.Items.reviver
     if not item then return false end
     local id, owner, ent = HorseByNet(src, netId)
@@ -770,7 +770,7 @@ local function WagonFor(src, netId, ownId)
     return e, WagonMeta(e.row)
 end
 
-lib.callback.register('fks-stables:wagonInfo', function(src, netId, ownId)
+Callback.Register('fks-stables:wagonInfo', function(src, netId, ownId)
     local e, meta = WagonFor(src, netId, ownId)
     if not e then return nil end
     local w = FKS.GetWagon(e.row.model)
@@ -782,7 +782,7 @@ lib.callback.register('fks-stables:wagonInfo', function(src, netId, ownId)
     }
 end)
 
-lib.callback.register('fks-stables:wagonAccess', function(src, netId, ownId, action, value)
+Callback.Register('fks-stables:wagonAccess', function(src, netId, ownId, action, value)
     local e, meta = WagonFor(src, netId, ownId)
     if not e or not e.P or e.row.citizenid ~= Cid(e.P) then return false, _L('not_owner') end
 
@@ -812,7 +812,7 @@ lib.callback.register('fks-stables:wagonAccess', function(src, netId, ownId, act
 end)
 
 -- stores the animal / pelt the player was carrying (the client deletes it from the world after "ok")
-lib.callback.register('fks-stables:storeAnimal', function(src, netId, ownId, model, quality)
+Callback.Register('fks-stables:storeAnimal', function(src, netId, ownId, model, quality)
     local e, meta = WagonFor(src, netId, ownId)
     if not e then return false end
     if not CanUseWagon(e.P, e.row, meta) then return false, _L('no_access_storage') end
@@ -829,13 +829,13 @@ lib.callback.register('fks-stables:storeAnimal', function(src, netId, ownId, mod
     return true, _L('animal_stored', info.label)
 end)
 
-lib.callback.register('fks-stables:listAnimals', function(src, netId, ownId)
+Callback.Register('fks-stables:listAnimals', function(src, netId, ownId)
     local e, meta = WagonFor(src, netId, ownId)
     if not e or not CanUseWagon(e.P, e.row, meta) then return nil end
     return meta.animals
 end)
 
-lib.callback.register('fks-stables:takeAnimal', function(src, netId, ownId, index, model)
+Callback.Register('fks-stables:takeAnimal', function(src, netId, ownId, index, model)
     local e, meta = WagonFor(src, netId, ownId)
     if not e or not CanUseWagon(e.P, e.row, meta) then return nil end
     index = tonumber(index) or 0
@@ -847,7 +847,7 @@ lib.callback.register('fks-stables:takeAnimal', function(src, netId, ownId, inde
 end)
 
 -- food the player has (for the "Feed" menu)
-lib.callback.register('fks-stables:feedItems', function(src)
+Callback.Register('fks-stables:feedItems', function(src)
     local list = {}
     for item, f in pairs(Config.Feed) do
         local n = Bridge.ItemCount(src, item)
@@ -880,7 +880,7 @@ CreateThread(function()
 end)
 
 -- Name tag (Config.Items.renameTag): renames the active horse and consumes the item
-lib.callback.register('fks-stables:tagRename', function(src, name)
+Callback.Register('fks-stables:tagRename', function(src, name)
     local item = Config.Items.renameTag
     local P = GetP(src); if not P or not item then return false end
     local row = DB.ActiveHorse(Cid(P))
@@ -895,12 +895,12 @@ lib.callback.register('fks-stables:tagRename', function(src, name)
     return true, _L('renamed', name), row.id, name
 end)
 
-lib.callback.register('fks-stables:hasItem', function(src, item)
+Callback.Register('fks-stables:hasItem', function(src, item)
     return Bridge.ItemCount(src, item)
 end)
 
 -- The client confirms it is next to the horse; only then the item is consumed
-lib.callback.register('fks-stables:consume', function(src, item)
+Callback.Register('fks-stables:consume', function(src, item)
     local isFeed = Config.Feed[item] ~= nil
     local tool = item == Config.Items.brush or item == Config.Care.hoof.item
     if not isFeed and not tool and item ~= Config.Items.reviver and item ~= Config.Wagon.repairItem then return false end
@@ -1055,7 +1055,7 @@ RegisterNetEvent('fks-stables:server:wildSpawned', function(i, netId, coatId, mo
 end)
 
 -- diagnostics (/fks_wild on the client): zone state on the server
-lib.callback.register('fks-stables:wildDebug', function(src)
+Callback.Register('fks-stables:wildDebug', function(src)
     local now, out = os.time(), {}
     for i, s in pairs(WZ) do
         local n = 0
@@ -1160,7 +1160,7 @@ RegisterNetEvent('fks-stables:server:wildFailed', function(netId)
 end)
 
 -- the client finished the mini-game: only counts if it lasted the whole time. The horse leaves the zone (captured).
-lib.callback.register('fks-stables:wildTamed', function(src, netId)
+Callback.Register('fks-stables:wildTamed', function(src, netId)
     local t = Taming[src]
     Taming[src] = nil
     if not t or t.netId ~= tonumber(netId) then return false end
@@ -1177,14 +1177,14 @@ local function MyTamed(src, netId)
     return t
 end
 
-lib.callback.register('fks-stables:wildQuote', function(src, netId)
+Callback.Register('fks-stables:wildQuote', function(src, netId)
     local P = GetP(src); if not P then return nil end
     local t = MyTamed(src, netId); if not t then return nil end
     local q = WildQuote(t)
     return { label = q.label, sell = q.sell, keep = q.keep, canSell = q.canSell, canKeep = q.canKeep, cooldown = WildCooldown(P), age = q.age }
 end)
 
-lib.callback.register('fks-stables:wildSell', function(src, netId, idx)
+Callback.Register('fks-stables:wildSell', function(src, netId, idx)
     local P = GetP(src); if not P then return false end
     local t = MyTamed(src, netId); if not t then return false, _L('wild_not_tamed') end
     local point = WildPoint(src, idx); if not point then return false, _L('wild_too_far') end
@@ -1200,7 +1200,7 @@ lib.callback.register('fks-stables:wildSell', function(src, netId, idx)
     return true, _L('wild_sold', MoneyText(q.sell))
 end)
 
-lib.callback.register('fks-stables:wildKeep', function(src, netId, idx, name)
+Callback.Register('fks-stables:wildKeep', function(src, netId, idx, name)
     local P = GetP(src); if not P then return false end
     local t = MyTamed(src, netId); if not t then return false, _L('wild_not_tamed') end
     local point = WildPoint(src, idx); if not point then return false, _L('wild_too_far') end

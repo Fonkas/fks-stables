@@ -7,12 +7,11 @@ lua54 'yes'
 name 'fks-stables'
 author 'FKS'
 description 'Stables, horses, wagons, wild horse taming, training and breeding for RedM (VORP / RSG)'
-version '1.3.0'
+version '1.4.0'
 license 'GPL-3.0-or-later'
 fks_core_version '2.1.0' -- minimum fks-core version (VORP / RSG bridge, shared UI, notifications, progress bar)
 
 shared_scripts {
-    '@ox_lib/init.lua',
     '@fks-core/import.lua',
     'config/main.lua',
     'config/horses.lua',
@@ -24,12 +23,14 @@ shared_scripts {
     'locales/*.lua',
     'shared/locale.lua',
     'shared/utils.lua',
+    'shared/callback.lua',    -- server callbacks (no ox_lib)
 }
 
 client_scripts {
     'client/appearance.lua',
     'client/stable.lua',
     'client/menu.lua',        -- stable menu screens (drawn by fks-core)
+    'client/panel.lua',       -- small menus: feed, wagon storage, wild horse, training (drawn by fks-core)
     'client/horse.lua',
     'client/wagon.lua',
     'client/care.lua',
@@ -55,6 +56,5 @@ files {
 --   not listed below so that, when it is missing, the server console shows the download link (server/version.lua)
 -- + a framework (rsg-core or vorp_core) and an inventory (ox_inventory, rsg-inventory or vorp_inventory)
 dependencies {
-    'ox_lib',
     'oxmysql',
 }

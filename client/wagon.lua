@@ -123,7 +123,7 @@ function Wagon.Despawn(stored, stableId)
 end
 
 function Wagon.Reapply()
-    local data = lib.callback.await('fks-stables:getActive', false, 'wagon')
+    local data = Callback.Await('fks-stables:getActive', 'wagon')
     if data and Exists() and data.id == Wagon.id then
         Wagon.data = data
         Look.ApplyWagon(Wagon.veh, data.model, data.custom)
@@ -134,7 +134,7 @@ function Wagon.Call()
     if Config.Wagon.callFromStableOnly then return Notify(_L('wagon_in_stable_only'), 'error') end
     if GetGameTimer() - Wagon.lastCall < 5000 then return end
     Wagon.lastCall = GetGameTimer()
-    local data, reason = lib.callback.await('fks-stables:getActive', false, 'wagon')
+    local data, reason = Callback.Await('fks-stables:getActive', 'wagon')
     if not data then return Notify(_L(reason or 'no_active_wagon'), 'error') end
     if data.health <= W.brokenAt then return Notify(_L('wagon_broken'), 'error') end
     Wagon.Spawn(data, nil)
@@ -151,7 +151,7 @@ end
 -- Broken wagon: nails + hammer (Config.Wagon.brokenRepair), on the spot. The wagon is recreated whole in the same place.
 function Wagon.Fix()
     if not Exists() or Wagon.fixing then return end
-    local ok, msg = lib.callback.await('fks-stables:wagonFix', false)
+    local ok, msg = Callback.Await('fks-stables:wagonFix')
     if not ok then return Notify(msg or _L('wagon_broken'), 'error') end
     Wagon.fixing = true
     local R = W.brokenRepair
@@ -187,7 +187,7 @@ function Wagon.Repair()
     if Exists() and Wagon.IsBroken(Wagon.veh) then return Wagon.Fix() end -- broken: only with nails and hammer
     local item = Config.Wagon.repairItem
     if not item or not Exists() then return end
-    if not lib.callback.await('fks-stables:consume', false, item) then return end
+    if not Callback.Await('fks-stables:consume', item) then return end
     TaskStartScenarioInPlace(PlayerPedId(), joaat('WORLD_HUMAN_HAMMER_KNEEL_STAKE'), 6000, true, false, false, false)
     Wait(6000)
     ClearPedTasks(PlayerPedId(), true, true)
@@ -299,7 +299,7 @@ RegisterCommand('fks_animal', function(_, args)
 end, false)
 
 function Wagon.RestoreAfterLogin()
-    local data = lib.callback.await('fks-stables:getActive', false, 'wagon')
+    local data = Callback.Await('fks-stables:getActive', 'wagon')
     -- comes back even when broken (no wheels where it was, so you can repair it with nails and hammer)
     if data and data.spawned and data.position then
         local p = data.position

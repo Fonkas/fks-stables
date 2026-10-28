@@ -138,21 +138,19 @@ end
 
 function Care.FeedMenu()
     if Care.busy then return end
-    local items = lib.callback.await('fks-stables:feedItems', false) or {}
+    local items = Callback.Await('fks-stables:feedItems') or {}
     if #items == 0 then return Notify(_L('no_horse_food'), 'error') end
     if #items == 1 then return Horse.Feed(items[1].item) end
     local opts = {}
     for _, it in ipairs(items) do
         local f = Config.Feed[it.item]
         opts[#opts + 1] = {
-            title = ('%s  ×%s'):format(it.label, it.count),
-            description = _L('feed_desc', f.health or 0, f.stamina or 0, f.hunger or 0),
-            icon = 'apple-whole',
+            title = it.label, tag = '×' .. it.count, icon = 'bag',
+            sub = _L('feed_desc', f.health or 0, f.stamina or 0, f.hunger or 0),
             onSelect = function() Horse.Feed(it.item) end,
         }
     end
-    lib.registerContext({ id = 'fks_feed', title = _L('feed_title', Horse.data.name), options = opts })
-    lib.showContext('fks_feed')
+    Panel.Open({ eyebrow = _L('stable'), title = _L('feed_title', Horse.data.name), items = opts })
 end
 
 function Care.Drink()
@@ -354,7 +352,7 @@ end
 -- Clean hooves: "stranded rider" scene — the player behind the horse, holding the hind leg
 function Care.CleanHooves()
     if Care.busy or not HorseOk() then return end
-    if not lib.callback.await('fks-stables:consume', false, C.hoof.item) then
+    if not Callback.Await('fks-stables:consume', C.hoof.item) then
         return Notify(_L('need_hoof_tool'), 'error')
     end
     local an = C.hoof.anim

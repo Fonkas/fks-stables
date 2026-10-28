@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.0
+
+- **No more ox_lib.** fks-core and oxmysql are the only dependencies: remove `ensure ox_lib` if no other script uses it.
+  Server callbacks have their own small layer (`shared/callback.lua`).
+- **Every menu is drawn by fks-core** in the FKS look: horse feed list, wagon storage (open / give access / manage
+  access), stored animals, wild horse sale point (sell / keep with name), training menu, name tag and transfer dialogs.
+  The training timer shows as an fks-core caption.
+- **Pat your horse:** the "Pat" prompt now shows when looking at your horse (it was on **G**, which never appeared;
+  now **B**, `Config.Prompts.pat`). The player drops the reins, walks to the horse's neck and plays the game's patting
+  clips (`mech_animal_interaction@horse@left|right@patting@short|long`, `Config.Pat.style`).
+- No database changes.
+
 ## 1.3.0
 
 - **The stable menu is now drawn by fks-core** (shared FKS UI). fks-stables no longer ships its own HTML, CSS, JS or

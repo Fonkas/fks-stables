@@ -223,7 +223,7 @@ function Stable.Open(id)
     if not s then return end
     if not IsOpenNow(s) then return Notify(_L('closed', s.hours[1]), 'error') end
 
-    local data = lib.callback.await('fks-stables:getData', false, id, true)
+    local data = Callback.Await('fks-stables:getData', id, true)
     if not data then return end
     if data.denied then return Notify(_L('no_access'), 'error') end
 
@@ -258,7 +258,7 @@ function Stable.Close()
 end
 
 local function Refresh()
-    local data = lib.callback.await('fks-stables:getData', false, Stable.current.id, false)
+    local data = Callback.Await('fks-stables:getData', Stable.current.id, false)
     if data and not data.denied then
         data.shopHorses, data.shopWagons = Stable.data.shopHorses, Stable.data.shopWagons
         Stable.data = data
@@ -372,7 +372,7 @@ local AFTER = {
 function Stable.Call(name, ...)
     if not Stable.open then return false end
     local args = ACTIONS[name](...)
-    local ok, msg = lib.callback.await('fks-stables:' .. name, false, table.unpack(args, 1, 5))
+    local ok, msg = Callback.Await('fks-stables:' .. name, table.unpack(args, 1, 5))
     if msg then Notify(msg, ok and 'success' or 'error') end
     if ok then
         if AFTER[name] then AFTER[name](...) end
@@ -387,7 +387,7 @@ function Stable.SaveComponents(id, values)
         local h = Look.HashAt(cat, tonumber(idx))
         if h ~= 0 then comps[cat] = h end
     end
-    local ok, msg = lib.callback.await('fks-stables:saveComponents', false, id, comps)
+    local ok, msg = Callback.Await('fks-stables:saveComponents', id, comps)
     if msg then Notify(msg, ok and 'success' or 'error') end
     if ok then
         if Horse.id == id then Horse.Reapply() end
@@ -397,7 +397,7 @@ function Stable.SaveComponents(id, values)
 end
 
 function Stable.TakeOut(kind, id)
-    local ok, res = lib.callback.await('fks-stables:takeOut', false, kind, id, Stable.current.id)
+    local ok, res = Callback.Await('fks-stables:takeOut', kind, id, Stable.current.id)
     if not ok then
         if res then Notify(res, 'error') end
         return false
@@ -463,7 +463,7 @@ local function Unshow(key)
 end
 
 function Breeding.Refresh()
-    local list = lib.callback.await('fks-stables:myBreedings', false) or {}
+    local list = Callback.Await('fks-stables:myBreedings') or {}
     local now = GetGameTimer()
     for _, b in ipairs(list) do b.readyAt = now + b.readyIn * 1000 end
     Breeding.pending = list
@@ -506,7 +506,7 @@ RegisterNetEvent('fks-stables:client:foalBorn', function(stableId, horseId)
     if not s or not s.breed then return end
     local b = s.breed
     if #(GetEntityCoords(PlayerPedId()) - vector3(b.left[1], b.left[2], b.left[3])) > 80.0 then return end
-    local look = lib.callback.await('fks-stables:horseLook', false, horseId)
+    local look = Callback.Await('fks-stables:horseLook', horseId)
     if not look then return end
     local pos = { (b.left[1] + b.right[1]) / 2, (b.left[2] + b.right[2]) / 2, (b.left[3] + b.right[3]) / 2, b.left[4] or 0.0 }
     local ped = ShowcasePed(look.model, look, pos)

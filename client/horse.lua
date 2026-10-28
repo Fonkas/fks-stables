@@ -341,7 +341,7 @@ function Horse.Despawn(stored, stableId)
 end
 
 function Horse.Reapply()
-    local data = lib.callback.await('fks-stables:getActive', false, 'horse')
+    local data = Callback.Await('fks-stables:getActive', 'horse')
     if data and Exists() and data.id == Horse.id then
         Horse.data = data
         Look.ApplyHorse(Horse.ped, { outfit = data.outfit, coat = data.coat, maneTail = data.maneTail, components = data.components, gender = data.gender, pregnant = data.pregnant })
@@ -502,17 +502,52 @@ function Horse.StopLead()
     ClearPedTasks(Me(), true, true)
 end
 
-local patTry, lastPat = 1, 0
+-- Pat: the player walks to the horse's neck (the side they are on) and plays the game's patting clips,
+-- mech_animal_interaction@horse@left|right@patting@short|long (Config.Pat). TaskAnimalInteraction does not
+-- play anything on our horse (its native prompts are blocked), so the clips are played directly.
+local lastPat = 0
 function Horse.Pat()
-    if not Exists() or Horse.IsDown(Horse.ped) then return end
-    local list = Config.Pat.interactions
-    local name = list[Config.Debug and patTry or 1]
-    if Config.Debug then
-        print(('[fks-stables] pat: trying "%s" (%s/%s)'):format(name, patTry, #list))
-        patTry = patTry % #list + 1
+    if not Exists() or Horse.IsDown(Horse.ped) or Horse.patting then return end
+    if Care and Care.busy then return end
+    local P, me, ped = Config.Pat, Me(), Horse.ped
+    Horse.patting = true
+    -- the leading task cancels any animation on the player
+    if Care and Care.Leading and Care.Leading() then Horse.StopLead() Wait(400) end
+    if Care and Care.resting then Care.StandUp(true) Wait(2500) end
+    if Horse.following then Horse.Stay() end
+    TaskStandStill(ped, 15000)
+
+    -- side of the horse the player is on, and the spot next to its neck
+    local rel = GetOffsetFromEntityGivenWorldCoords(ped, GetEntityCoords(me))
+    local side = rel.x < 0 and 'left' or 'right'
+    local sx = side == 'left' and -1 or 1
+    local spot = GetOffsetFromEntityInWorldCoords(ped, sx * P.offset.x, P.offset.y, 0.0)
+    local neck = GetOffsetFromEntityInWorldCoords(ped, 0.0, P.offset.y, 0.0)
+    ClearPedTasks(me, true, true)
+    TaskGoStraightToCoord(me, spot.x, spot.y, spot.z, 1.0, 4000, GetHeadingFromVector_2d(neck.x - spot.x, neck.y - spot.y), 0.1)
+    local t = GetGameTimer() + 4000
+    while GetGameTimer() < t and #(GetEntityCoords(me).xy - spot.xy) > 0.25 do Wait(100) end
+    SetEntityHeading(me, GetHeadingFromVector_2d(neck.x - spot.x, neck.y - spot.y))
+
+    local dict = ('mech_animal_interaction@horse@%s@patting@%s'):format(side, P.style)
+    RequestAnimDict(dict)
+    t = GetGameTimer() + 3000
+    while not B(HasAnimDictLoaded(dict)) and GetGameTimer() < t do Wait(50) end
+    if B(HasAnimDictLoaded(dict)) then
+        if Config.Debug then print(('[fks-stables] pat: %s'):format(dict)) end
+        for _, clip in ipairs(P.clips) do
+            TaskPlayAnim(me, dict, clip, 4.0, -4.0, -1, 0, 0, false, false, false)
+            Wait(300)
+            while B(IsEntityPlayingAnim(me, dict, clip, 3)) do Wait(100) end
+        end
+        RemoveAnimDict(dict)
+    elseif Config.Debug then
+        print(('[fks-stables] pat: anim dict %s did not load'):format(dict))
     end
-    TaskAnimalInteraction(Me(), Horse.ped, joaat(name), 0, 0)
-    if GetGameTimer() - lastPat > Config.Pat.cooldown * 1000 then
+    ClearPedTasks(ped, true, true)
+    Horse.patting = false
+
+    if GetGameTimer() - lastPat > P.cooldown * 1000 then
         lastPat = GetGameTimer()
         Horse.acc.bond = Horse.acc.bond + (Config.Pat.bond or 0)
         Horse.acc.affinity = (Horse.acc.affinity or 0) + ((Config.Affinity or {}).perFeed or 0)
@@ -566,7 +601,7 @@ function Horse.Whistle()
         Horse.Despawn(false)
     end
 
-    local data, reason = lib.callback.await('fks-stables:getActive', false, 'horse')
+    local data, reason = Callback.Await('fks-stables:getActive', 'horse')
     if not data then return Notify(_L(reason or 'no_active_horse'), 'error') end
     if Config.Horse.callFromStableOnly and not data.spawned then return Notify(_L('horse_in_stable_only'), 'error') end
     if data.dead then
@@ -742,13 +777,12 @@ end)
 
 -- Name tag (Config.Items.renameTag): renames the active horse
 function Horse.TagRename()
-    local data = Horse.data or lib.callback.await('fks-stables:getActive', false, 'horse')
+    local data = Horse.data or Callback.Await('fks-stables:getActive', 'horse')
     if not data then return Notify(_L('no_active_horse'), 'error') end
-    local input = lib.inputDialog(_L('tag_title', data.name), {
-        { type = 'input', label = _L('wild_name'), default = data.name, required = true, min = 2, max = 24 },
-    })
-    if not input or not input[1] then return end
-    local ok, msg, id, name = lib.callback.await('fks-stables:tagRename', false, input[1])
+    local input = UI.Prompt({ title = _L('tag_title', data.name), ok = _LU('confirm'), cancel = _LU('cancel'),
+        fields = { { type = 'input', name = 'name', label = _L('wild_name'), value = data.name, max = 24, required = true, pattern = '^.{2,}$' } } })
+    if not input or not input.name then return end
+    local ok, msg, id, name = Callback.Await('fks-stables:tagRename', input.name)
     if msg then Notify(msg, ok and 'success' or 'error') end
     if ok and Horse.data and Horse.id == id then
         Horse.data.name = name
@@ -761,11 +795,11 @@ end
 -- Give the horse to another player ("Transfer" prompt when looking at your horse)
 function Horse.GiveMenu()
     if not Horse.data then return end
-    local input = lib.inputDialog(_L('give_title', Horse.data.name), {
-        { type = 'number', label = _L('access_player_id'), required = true, min = 1 },
-    })
-    if not input or not input[1] then return end
-    local ok, msg = lib.callback.await('fks-stables:giveHorse', false, Horse.id, input[1])
+    local input = UI.Prompt({ title = _L('give_title', Horse.data.name), ok = _LU('confirm'), cancel = _LU('cancel'),
+        fields = { { type = 'number', name = 'id', label = _L('access_player_id'), min = 1, step = 1, required = true } } })
+    local target = input and tonumber(input.id)
+    if not target then return end
+    local ok, msg = Callback.Await('fks-stables:giveHorse', Horse.id, target)
     if msg then Notify(msg, ok and 'success' or 'error') end
 end
 
@@ -817,7 +851,7 @@ function Horse.Feed(item)
     if mounted and not Config.Care.mountedFeed then return end
     if not f or not (NearOwnHorse() or mounted) or Horse.IsDown(Horse.ped) then return Notify(_L('horse_too_far'), 'error') end
     if Horse.busy then return end
-    if not lib.callback.await('fks-stables:consume', false, item) then return end
+    if not Callback.Await('fks-stables:consume', item) then return end
     Horse.busy = true
     local ped = Horse.ped
     -- the same interaction works on foot and mounted (the game picks the animation of leaning down to the horse's mouth)
@@ -900,7 +934,7 @@ end
 
 function Horse.Brush()
     if not NearOwnHorse() or Horse.IsDown(Horse.ped) then return Notify(_L('horse_too_far'), 'error') end
-    if not lib.callback.await('fks-stables:consume', false, Config.Items.brush) then return end -- has a brush?
+    if not Callback.Await('fks-stables:consume', Config.Items.brush) then return end -- has a brush?
     local ped = Horse.ped
     -- the game's brushing animation, with the brush in hand (client/care.lua)
     if Care and Care.PlayBrush then
@@ -1003,7 +1037,7 @@ function Horse.ReviveAt(ent)
         return Notify(_L('horse_too_far'), 'error')
     end
     local name = HorseName(ent)
-    local ok, msg = lib.callback.await('fks-stables:reviveHorse', false, NetworkGetNetworkIdFromEntity(ent),
+    local ok, msg = Callback.Await('fks-stables:reviveHorse', NetworkGetNetworkIdFromEntity(ent),
         ent == Horse.ped and Horse.id or nil)
     if not ok then
         Horse.reviving = false
@@ -1215,7 +1249,7 @@ end)
 ---------------------------------------------------------------------------
 local function RestoreAfterLogin()
     if not Config.Horse.respawnAfterLogin then return end
-    local data = lib.callback.await('fks-stables:getActive', false, 'horse')
+    local data = Callback.Await('fks-stables:getActive', 'horse')
     if data and data.spawned and not data.dead and data.position then
         local p = data.position
         Horse.Spawn(data, vector4(p[1], p[2], p[3], p[4] or 0.0), true)

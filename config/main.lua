@@ -57,10 +57,12 @@ Config.Horse = {
     canShootOwn = true,             -- you can aim at / shoot your own horse like any other (false = only the interaction lock-on)
 }
 
--- Pat: game interaction used (tried in order; with Config.Debug each click uses the next one
--- and prints which one it was in the F8 console — keep only the one that works)
+-- Pat ("Pat" prompt looking at your horse): the player walks to the horse's neck and plays the game's
+-- patting clips (mech_animal_interaction@horse@left|right@patting@<style>), on the side they are on.
 Config.Pat = {
-    interactions = { 'Interaction_Pat', 'Interaction_Pat_Horse', 'Interaction_Reward', 'Interaction_Comfort' },
+    style = 'short',    -- 'short' (quick pats) or 'long' (longer strokes)
+    clips = { 'enter_lf', 'idle_a', 'exit' }, -- played in order (with 'long' use { 'idle_a', 'exit' })
+    offset = { x = 0.75, y = 1.0 },          -- spot next to the neck: metres to the side / forward of the horse
     bond = 1,           -- bond gained
     cooldown = 15,      -- seconds between pats that give bond
 }
@@ -86,7 +88,7 @@ Config.Prompts = {
     -- Replace the native prompts — see hideNative
     showInfo    = 0x31219490, -- Q   horse sheet (panel)
     lead        = 0x17D3BFF5, -- E   lead by the reins
-    pat         = 0xA1ABB953, -- G   pat (calms it and gives bond)
+    pat         = 0x63A38F2C, -- B   pat (calms it and gives bond) · G (0xA1ABB953) does not show: the native Pat is hidden
     flee        = 0x4216AF06, -- F   send to the stable
     stopLead    = 0x26A18F47, -- F   drop the reins (lead menu · INPUT_INTERACT_LOCKON_NEG, active on foot)
     care        = 0x63A38F2C, -- B   (hold) revive, with the horse dead (brushing is in the lead menu)

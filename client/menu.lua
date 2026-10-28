@@ -487,9 +487,13 @@ local function refresh() return { view = Menu.View() } end
 ---------------------------------------------------------------------------
 -- Actions
 ---------------------------------------------------------------------------
-UI.On('close', function() Stable.Close() end)
+UI.On('close', function()
+    if Panel.open then return Panel.Closed() end -- the small menus of client/panel.lua
+    Stable.Close()
+end)
 
 UI.On('page', function(d)
+    if not Stable.open then return end
     if d.from == 'custom' and st.custom then
         st.custom = nil   -- ESC out of the customisation: nothing saved
     end

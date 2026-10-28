@@ -91,7 +91,7 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
 | | |
 |---|---|
 | Server | RedM with **OneSync** enabled |
-| Libraries | [ox_lib](https://github.com/overextended/ox_lib), [oxmysql](https://github.com/overextended/oxmysql) |
+| Libraries | [oxmysql](https://github.com/overextended/oxmysql) |
 | FKS base | [fks-core](https://github.com/Fonkas/fks-core) **2.1.0 or newer** (VORP / RSG bridge, shared UI, notifications, progress bar) |
 | Framework | [vorp_core](https://github.com/VORPCORE/vorp-core-lua) **or** [rsg-core](https://github.com/Rexshack-RedM/rsg-core) |
 | Inventory | `vorp_inventory`, `rsg-inventory` or `ox_inventory` |
@@ -105,7 +105,6 @@ No `ox_target`: everything uses native RedM prompts. Available in 7 languages.
    otherwise prompts and items will conflict.
 3. **Add it to your server config** after its dependencies:
    ```cfg
-   ensure ox_lib
    ensure oxmysql
    ensure vorp_core        # or rsg-core
    ensure vorp_inventory   # or rsg-inventory / ox_inventory
@@ -280,7 +279,7 @@ With `Config.Debug = true`, `/fks_wildspawn` spawns horses right away in the zon
 | Looking at your horse | **R** | saddlebags (only with a bag equipped) |
 | | **Q** | horse sheet |
 | | **E** | lead by the reins |
-| | **G** | pat |
+| | **B** | pat (walks to its neck and pats it) |
 | | **F** | send away (to the stable) |
 | | **X** | follow me / stay |
 | | **C** (hold) | transfer to another player |
@@ -400,7 +399,7 @@ fks-stables/
 - Interface: drawn by [fks-core](https://github.com/Fonkas/fks-core) (fonts and their licenses live there).
 - Contributors: [sathishkumar2611](https://github.com/sathishkumar2611) — extra stables, stash slots, wild horse zones
   and economy, full horse catalogue.
-- Built for the RedM community. Thanks to the Overextended (ox_lib, oxmysql), VORP and RSG teams.
+- Built for the RedM community. Thanks to the Overextended (oxmysql), VORP and RSG teams.
 
 ---
 

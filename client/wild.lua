@@ -256,7 +256,7 @@ RegisterCommand('fks_wild', function()
         end
         print(('  zone %s (host): %s horse(s) listed, %s exist here'):format(i, total, alive))
     end
-    for _, z in ipairs(lib.callback.await('fks-stables:wildDebug', false) or {}) do
+    for _, z in ipairs(Callback.Await('fks-stables:wildDebug') or {}) do
         print(('  server · zone %s: host=%s players=%s horses=%s · next roll in %ss · cooldown %ss'):format(
             z.zone, tostring(z.host), z.players, z.horses, z.nextRoll, z.cooldown))
     end
@@ -314,7 +314,7 @@ local function StartTaming(horse)
     })
     running = false
 
-    if tameResult and lib.callback.await('fks-stables:wildTamed', false, netId) then
+    if tameResult and Callback.Await('fks-stables:wildTamed', netId) then
         Control(horse)
         SetEntityAsMissionEntity(horse, true, true)
         ClearPedTasks(horse, true, true)
@@ -388,42 +388,40 @@ local function Money(v)
 end
 
 local function Sell(idx)
-    local ok, msg = lib.callback.await('fks-stables:wildSell', false, Wild.netId, idx)
+    local ok, msg = Callback.Await('fks-stables:wildSell', Wild.netId, idx)
     if msg then Notify(msg, ok and 'success' or 'error') end
     if ok then RemoveTamed() end
 end
 
-local function Keep(idx)
-    local input = lib.inputDialog(_L('wild_name_title'), {
-        { type = 'input', label = _L('wild_name'), required = true, min = 2, max = 24 },
-    })
-    if not input or not input[1] then return end
-    local ok, msg = lib.callback.await('fks-stables:wildKeep', false, Wild.netId, idx, input[1])
+local function Keep(idx, name)
+    if not name or name == '' then return end
+    local ok, msg = Callback.Await('fks-stables:wildKeep', Wild.netId, idx, name)
     if msg then Notify(msg, ok and 'success' or 'error') end
     if ok then RemoveTamed() end
 end
 
 local function OpenMenu(idx)
-    local q = lib.callback.await('fks-stables:wildQuote', false, Wild.netId)
+    local q = Callback.Await('fks-stables:wildQuote', Wild.netId)
     if not q then return Notify(_L('wild_not_tamed'), 'error') end
     local p = C.points[idx]
     local s = FKS.StableById[p.stable]
-    lib.registerContext({
-        id = 'fks_wild', title = q.label,
-        options = {
+    Panel.Open({
+        eyebrow = _L('stable'), title = q.label,
+        items = {
             {
-                title = _L('wild_sell', Money(q.sell)), icon = 'dollar-sign', disabled = not q.canSell or q.cooldown > 0,
-                description = (not q.canSell and _L('wild_cant_sell')) or (q.cooldown > 0 and _L('wild_cooldown', q.cooldown)) or nil,
+                title = _L('wild_sell', Money(q.sell)), icon = 'coin', disabled = not q.canSell or q.cooldown > 0,
+                sub = (not q.canSell and _L('wild_cant_sell')) or (q.cooldown > 0 and _L('wild_cooldown', q.cooldown)) or nil,
                 onSelect = function() Sell(idx) end,
             },
             {
                 title = _L('wild_keep', Money(q.keep)), icon = 'horse', disabled = not q.canKeep,
-                description = q.canKeep and _L('wild_keep_desc', s and s.label or p.label, q.age[1], q.age[2]) or _L('wild_cant_keep'),
-                onSelect = function() Keep(idx) end,
+                sub = q.canKeep and _L('wild_keep_desc', s and s.label or p.label, q.age[1], q.age[2]) or _L('wild_cant_keep'),
+                prompt = { title = _L('wild_name_title'), ok = _LU('confirm'), cancel = _LU('cancel'),
+                    fields = { { type = 'input', name = 'name', label = _L('wild_name'), max = 24, required = true, pattern = '^.{2,}$' } } },
+                onSelect = function(v) Keep(idx, v.name) end,
             },
         },
     })
-    lib.showContext('fks_wild')
 end
 
 local G = GetRandomIntInRange(0, 0xffffff)

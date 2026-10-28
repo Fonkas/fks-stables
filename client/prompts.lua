@@ -124,7 +124,7 @@ CreateThread(function()
                         Show(t.p.info, onFoot)
                         Show(t.p.give, onFoot and not dead and Horse.data ~= nil and Horse.data.canGive ~= false)
                         Show(t.p.lead, onFoot and not dead and not leading)
-                        Show(t.p.pat, onFoot and not dead)
+                        Show(t.p.pat, onFoot and not dead and not Horse.patting)
                         Show(t.p.flee, onFoot and not dead)
                         if t.follow ~= Horse.following then
                             t.follow = Horse.following
@@ -156,7 +156,7 @@ CreateThread(function()
                         CreateThread(Horse.Lead)
                         Wait(300)
                     elseif t.own and not dead and Done(t.p.pat) then
-                        Horse.Pat()
+                        CreateThread(Horse.Pat)
                         Wait(300)
                     elseif t.own and not dead and Done(t.p.flee) then
                         Horse.Flee()
@@ -226,56 +226,52 @@ local function Carrying()
     end
 end
 
--- "Storage" menu: open / give access / manage access
-local function AccessMenu(veh, info)
-    local netId, ownId = Ids(veh)
-    local opts = {}
-    for _, a in ipairs(info.access or {}) do
-        opts[#opts + 1] = {
-            title = a.name, icon = 'user', description = _L('access_remove_hint'),
-            onSelect = function()
-                local ok = lib.alertDialog({ header = _L('access_remove_title'), content = _L('access_remove_confirm', a.name), centered = true, cancel = true })
-                if ok == 'confirm' then
-                    local res, msg = lib.callback.await('fks-stables:wagonAccess', false, netId, ownId, 'remove', a.cid)
-                    if msg then Notify(msg, res and 'success' or 'error') end
-                end
-            end,
-        }
-    end
-    if #opts == 0 then opts[1] = { title = _L('access_none'), readOnly = true } end
-    lib.registerContext({ id = 'fks_wagon_access', title = _L('access_manage'), menu = 'fks_wagon_menu', options = opts })
-    lib.showContext('fks_wagon_access')
-end
-
+-- "Storage" menu: open / give access / manage access (second page)
 local function OpenWagonMenu(veh)
     local netId, ownId = Ids(veh)
-    local info = lib.callback.await('fks-stables:wagonInfo', false, netId, ownId)
+    local info = Callback.Await('fks-stables:wagonInfo', netId, ownId)
     if not info then return end
     if not info.canUse then return Notify(_L('no_access_storage'), 'error') end
 
-    local opts = {
-        { title = _L('w_open_storage'), icon = 'box-open', disabled = info.storage <= 0,
+    local home = {
+        { title = _L('w_open_storage'), icon = 'box', disabled = info.storage <= 0,
           onSelect = function() TriggerServerEvent('fks-stables:server:openStash', netId, ownId and 'wagon' or nil, ownId) end },
     }
+    local access = {}
     if info.isOwner then
-        opts[#opts + 1] = {
-            title = _L('w_give_access'), icon = 'user-plus',
-            onSelect = function()
-                local input = lib.inputDialog(_L('w_give_access'), {
-                    { type = 'number', label = _L('access_player_id'), required = true, min = 1 },
-                })
-                if not input or not input[1] then return end
-                local res, msg = lib.callback.await('fks-stables:wagonAccess', false, netId, ownId, 'add', input[1])
+        home[#home + 1] = {
+            title = _L('w_give_access'), icon = 'plus',
+            prompt = { title = _L('w_give_access'), ok = _LU('confirm'), cancel = _LU('cancel'),
+                fields = { { type = 'number', name = 'id', label = _L('access_player_id'), min = 1, step = 1, required = true } } },
+            onSelect = function(v)
+                local id = tonumber(v.id)
+                if not id then return end
+                local res, msg = Callback.Await('fks-stables:wagonAccess', netId, ownId, 'add', id)
                 if msg then Notify(msg, res and 'success' or 'error') end
             end,
         }
-        opts[#opts + 1] = {
-            title = _L('access_manage'), icon = 'users', description = _L('access_count', #(info.access or {})),
-            onSelect = function() AccessMenu(veh, info) end,
+        home[#home + 1] = {
+            title = _L('access_manage'), icon = 'transfer', sub = _L('access_count', #(info.access or {})), go = 'access',
         }
+        for _, a in ipairs(info.access or {}) do
+            access[#access + 1] = {
+                title = a.name, icon = 'x', sub = _L('access_remove_hint'),
+                confirm = { title = _L('access_remove_title'), text = _L('access_remove_confirm', a.name), danger = true,
+                    ok = _LU('confirm'), cancel = _LU('cancel') },
+                onSelect = function()
+                    local res, msg = Callback.Await('fks-stables:wagonAccess', netId, ownId, 'remove', a.cid)
+                    if msg then Notify(msg, res and 'success' or 'error') end
+                end,
+            }
+        end
     end
-    lib.registerContext({ id = 'fks_wagon_menu', title = info.name, options = opts })
-    lib.showContext('fks_wagon_menu')
+    Panel.Open({
+        eyebrow = _L('stable'), title = info.name, page = 'home',
+        pages = {
+            home = { items = home },
+            access = { title = _L('access_manage'), items = access, empty = _L('access_none') },
+        },
+    })
 end
 
 -- Store the animal / pelt the player is carrying
@@ -283,7 +279,7 @@ local function StoreCarried(veh)
     local ent, a = Carrying()
     if not ent then return end
     local netId, ownId = Ids(veh)
-    local info = lib.callback.await('fks-stables:wagonInfo', false, netId, ownId)
+    local info = Callback.Await('fks-stables:wagonInfo', netId, ownId)
     if not info then return end
     if not info.canUse then return Notify(_L('no_access_storage'), 'error') end
     if info.cap <= 0 then return Notify(_L('wagon_no_animals'), 'error') end
@@ -309,7 +305,7 @@ local function StoreCarried(veh)
     if DoesEntityExist(ent) then return Notify(_L('animal_store_failed'), 'error') end
     ClearPedTasks(PlayerPedId(), true, true)
 
-    local ok, msg = lib.callback.await('fks-stables:storeAnimal', false, netId, ownId, model, quality)
+    local ok, msg = Callback.Await('fks-stables:storeAnimal', netId, ownId, model, quality)
     if msg then Notify(msg, ok and 'success' or 'error') end
     if not ok then -- puts the animal back on the ground if the server refused
         Wagon.SpawnCarcass({ model = a.model, quality = quality, pelt = a.pelt }, spot)
@@ -319,16 +315,16 @@ end
 -- List of stored animals (click = take it out next to the wagon)
 local function ManageAnimals(veh)
     local netId, ownId = Ids(veh)
-    local list = lib.callback.await('fks-stables:listAnimals', false, netId, ownId)
+    local list = Callback.Await('fks-stables:listAnimals', netId, ownId)
     if not list then return Notify(_L('no_access_storage'), 'error') end
     local opts = {}
     for i, a in ipairs(list) do
-        local stars = a.quality and (' · ' .. string.rep('★', a.quality + 1)) or ''
+        local stars = a.quality and string.rep('★', a.quality + 1) or nil
         opts[#opts + 1] = {
-            title = a.label .. stars, icon = a.pelt and 'scroll' or 'paw',
-            description = a.big and _L('animal_big') or nil,
+            title = a.label, tag = stars, icon = a.pelt and 'pelt' or 'take',
+            sub = a.big and _L('animal_big') or nil,
             onSelect = function()
-                local got = lib.callback.await('fks-stables:takeAnimal', false, netId, ownId, i, a.model)
+                local got = Callback.Await('fks-stables:takeAnimal', netId, ownId, i, a.model)
                 if not got then return Notify(_L('animal_list_changed'), 'error') end
                 local min = GetModelDimensions(GetEntityModel(veh))
                 local spot = GetOffsetFromEntityInWorldCoords(veh, 0.0, min.y - 1.3, 0.0)
@@ -338,10 +334,8 @@ local function ManageAnimals(veh)
             end,
         }
     end
-    if #opts == 0 then opts[1] = { title = _L('animals_empty'), readOnly = true } end
     local w = WagonConfig(veh)
-    lib.registerContext({ id = 'fks_wagon_animals', title = _L('animals_title', w and w.label or ''), options = opts })
-    lib.showContext('fks_wagon_animals')
+    Panel.Open({ eyebrow = _L('stable'), title = _L('animals_title', w and w.label or ''), items = opts, empty = _L('animals_empty') })
 end
 
 CreateThread(function()

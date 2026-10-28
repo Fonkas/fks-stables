@@ -39,7 +39,7 @@ end
 -- Trainer?
 ---------------------------------------------------------------------------
 local function RefreshTrainer()
-    Training.isTrainer = lib.callback.await('fks-stables:isTrainer', false) == true
+    Training.isTrainer = Callback.Await('fks-stables:isTrainer') == true
 end
 
 CreateThread(function()
@@ -55,7 +55,7 @@ Bridge.OnJobUpdate(RefreshTrainer)
 function Training.Stop(msg, kind)
     if not Training.active then return end
     Training.active = nil
-    lib.hideTextUI()
+    UI.Caption(false)
     TriggerServerEvent('fks-stables:server:trainStop')
     if msg then Notify(msg, kind or 'error') end
 end
@@ -76,7 +76,7 @@ local function NearestCourse()
 end
 
 function Training.StartObstacles(ci)
-    local ok, msg = lib.callback.await('fks-stables:trainStart', false, 'obstacles', ci)
+    local ok, msg = Callback.Await('fks-stables:trainStart', 'obstacles', ci)
     if not ok then return Notify(msg or _L('no_permission'), 'error') end
     if Care and Care.Leading and Care.Leading() then Horse.StopLead() end
     local O, c = T.obstacles, T.obstacles.courses[ci]
@@ -104,8 +104,8 @@ function Training.StartObstacles(ci)
                     if idx == 1 then t0 = GetGameTimer() end
                     idx = idx + 1
                     if idx > #route then
-                        lib.hideTextUI()
-                        local okDone, m = lib.callback.await('fks-stables:trainDone', false, 'obstacles')
+                        UI.Caption(false)
+                        local okDone, m = Callback.Await('fks-stables:trainDone', 'obstacles')
                         Training.active = nil
                         Notify(m or _L('train_failed'), okDone and 'success' or 'error')
                         break
@@ -117,7 +117,7 @@ function Training.StartObstacles(ci)
                 local left = (c.timeLimit or 0) > 0 and (c.timeLimit * 1000 - (GetGameTimer() - t0)) or nil
                 if left and left <= 0 then Training.Stop(_L('train_time_up')) break end
                 local text = _L('train_obstacles_hud', idx - 1, #route - 1, left and Clock(left) or Clock(GetGameTimer() - t0))
-                if text ~= shown then shown = text lib.showTextUI(text) end
+                if text ~= shown then shown = text UI.Caption({ text = text }) end
             end
         end
     end)
@@ -130,7 +130,7 @@ local LG = GetRandomIntInRange(0, 0xffffff)
 local LP
 
 function Training.StartLunge()
-    local ok, msg = lib.callback.await('fks-stables:trainStart', false, 'lunge')
+    local ok, msg = Callback.Await('fks-stables:trainStart', 'lunge')
     if not ok then return Notify(msg or _L('no_permission'), 'error') end
     if Care and Care.Leading and Care.Leading() then Horse.StopLead() Wait(600) end
     local L = T.lunge
@@ -177,7 +177,7 @@ function Training.StartLunge()
             if GetGameTimer() > nextTick then
                 nextTick = GetGameTimer() + 60000
                 CreateThread(function()
-                    if lib.callback.await('fks-stables:trainTick', false) then Notify(_L('train_xp', L.xpPerMinute), 'success') end
+                    if Callback.Await('fks-stables:trainTick') then Notify(_L('train_xp', L.xpPerMinute), 'success') end
                 end)
             end
         end
@@ -202,7 +202,7 @@ end
 
 function Training.StartLoad(pi)
     local p = T.load.points[pi]
-    local ok, dest = lib.callback.await('fks-stables:trainStart', false, 'load', pi)
+    local ok, dest = Callback.Await('fks-stables:trainStart', 'load', pi)
     if not ok then return Notify(dest or _L('no_permission'), 'error') end
     local d = T.load.destinations[dest]
     Training.active = { kind = 'load', point = pi, dest = dest }
@@ -245,10 +245,10 @@ function Training.StartLoad(pi)
             local left = endAt - GetGameTimer()
             if left <= 0 then Training.Stop(_L('train_time_up')) break end
             local text = _L('train_load_hud', d.label, Clock(left))
-            if text ~= shown then shown = text lib.showTextUI(text) end
+            if text ~= shown then shown = text UI.Caption({ text = text }) end
             if #(GetEntityCoords(veh) - d.coords) <= T.load.arriveRadius then
-                lib.hideTextUI()
-                local okDone, m = lib.callback.await('fks-stables:trainDone', false, 'load')
+                UI.Caption(false)
+                local okDone, m = Callback.Await('fks-stables:trainDone', 'load')
                 Training.active = nil
                 success = okDone
                 Notify(m or _L('train_failed'), okDone and 'success' or 'error')
@@ -263,13 +263,13 @@ function Training.StartLoad(pi)
             end
         end
         -- cleanup: wagon removed, the horse comes back next to you
-        lib.hideTextUI()
+        UI.Caption(false)
         GpsClear()
         RemoveBlip(blip)
         local me2 = Me()
         if GetVehiclePedIsIn(me2, false) == veh then TaskLeaveVehicle(me2, veh, 0) Wait(2000) end
         if DoesEntityExist(veh) then SetEntityAsMissionEntity(veh, true, true) DeleteEntity(veh) end
-        local data = lib.callback.await('fks-stables:getActive', false, 'horse')
+        local data = Callback.Await('fks-stables:getActive', 'horse')
         if data and not data.dead then
             local at = GetOffsetFromEntityInWorldCoords(me2, 2.5, 1.0, 0.0)
             Horse.Spawn(data, vector4(at.x, at.y, at.z, GetEntityHeading(me2) + 90.0), true)
@@ -319,31 +319,30 @@ function Training.Menu()
     local ci, cd = NearestCourse()
     local course = ci and T.obstacles.courses[ci]
     local nearCourse = course and cd <= T.obstacles.startDistance
-    lib.registerContext({
-        id = 'fks_train', title = _L('train_title'),
-        options = {
+    Panel.Open({
+        eyebrow = _L('stable'), title = _L('train_title'),
+        items = {
             {
-                title = _L('train_obstacles'), icon = 'flag-checkered', disabled = not nearCourse,
-                description = nearCourse and _L('train_obstacles_desc', course.label, course.xp or 100)
+                title = _L('train_obstacles'), icon = 'spur', disabled = not nearCourse,
+                sub = nearCourse and _L('train_obstacles_desc', course.label, course.xp or 100)
                     or _L('train_obstacles_far', course and course.label or '-', cd and math.floor(cd) or 0),
                 onSelect = function() Training.StartObstacles(ci) end,
             },
             {
-                title = _L('train_lunge'), icon = 'rotate', description = _L('train_lunge_desc', T.lunge.xpPerMinute),
+                title = _L('train_lunge'), icon = 'rotr', sub = _L('train_lunge_desc', T.lunge.xpPerMinute),
                 onSelect = function() Training.StartLunge() end,
             },
             {
-                title = _L('train_load'), icon = 'weight-hanging', disabled = true,
-                description = _L('train_load_desc', T.load.xp),
+                title = _L('train_load'), icon = 'wagon', disabled = true,
+                sub = _L('train_load_desc', T.load.xp),
             },
         },
     })
-    lib.showContext('fks_train')
 end
 
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
-    lib.hideTextUI()
+    UI.Caption(false)
     GpsClear()
     if LP then for _, p in pairs(LP) do PromptDelete(p) end end
     if pLoad then PromptDelete(pLoad) end

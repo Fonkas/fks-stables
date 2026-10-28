@@ -20,7 +20,7 @@ local function GiveXP(src, horseId, amount)
     TriggerClientEvent('fks-stables:client:xpGain', src, horseId, math.floor(amount))
 end
 
-lib.callback.register('fks-stables:isTrainer', function(src)
+Callback.Register('fks-stables:isTrainer', function(src)
     return SV.IsTrainer(src)
 end)
 
@@ -39,7 +39,7 @@ end
 -- Training
 ---------------------------------------------------------------------------
 -- kind: 'obstacles' (arg = course index) | 'lunge' | 'load' (arg = load point index)
-lib.callback.register('fks-stables:trainStart', function(src, kind, arg)
+Callback.Register('fks-stables:trainStart', function(src, kind, arg)
     if not SV.IsTrainer(src) then return false, _L('no_permission') end
     local horse = MyHorseOut(src)
     if not horse then return false, _L('no_active_horse') end
@@ -63,7 +63,7 @@ lib.callback.register('fks-stables:trainStart', function(src, kind, arg)
 end)
 
 -- lunging: every minute
-lib.callback.register('fks-stables:trainTick', function(src)
+Callback.Register('fks-stables:trainTick', function(src)
     local a = Active[src]
     if not a or a.kind ~= 'lunge' then return false end
     local now = os.time()
@@ -73,7 +73,7 @@ lib.callback.register('fks-stables:trainTick', function(src)
     return true
 end)
 
-lib.callback.register('fks-stables:trainDone', function(src, kind)
+Callback.Register('fks-stables:trainDone', function(src, kind)
     local a = Active[src]
     if not a or a.kind ~= kind then return false end
     Active[src] = nil
@@ -102,7 +102,7 @@ end)
 ---------------------------------------------------------------------------
 -- Give the horse to another player
 ---------------------------------------------------------------------------
-lib.callback.register('fks-stables:giveHorse', function(src, horseId, target)
+Callback.Register('fks-stables:giveHorse', function(src, horseId, target)
     local P = SV.GetP(src); if not P then return false end
     horseId, target = tonumber(horseId), tonumber(target)
     local row = horseId and SV.Owned(P, 'horse', horseId)
@@ -144,7 +144,7 @@ local function RandomCoat(breedA, breedB)
     return pool[math.random(#pool)]
 end
 
-lib.callback.register('fks-stables:breed', function(src, stableId, motherId, fatherId)
+Callback.Register('fks-stables:breed', function(src, stableId, motherId, fatherId)
     local P = SV.GetP(src); if not P then return false end
     if not SV.IsTrainer(src, P) then return false, _L('no_permission') end
     local stable = SV.StableAccess(src, P, stableId)
@@ -188,7 +188,7 @@ local function LookOf(h)
         gender = h.gender, scale = h.scale } or nil
 end
 
-lib.callback.register('fks-stables:myBreedings', function(src)
+Callback.Register('fks-stables:myBreedings', function(src)
     local P = SV.GetP(src); if not P then return {} end
     local list, now = {}, os.time()
     for _, b in ipairs(DB.Breedings(P.cid)) do
@@ -199,7 +199,7 @@ lib.callback.register('fks-stables:myBreedings', function(src)
     return list
 end)
 
-lib.callback.register('fks-stables:horseLook', function(src, id)
+Callback.Register('fks-stables:horseLook', function(src, id)
     local P = SV.GetP(src); if not P then return nil end
     local row = SV.Owned(P, 'horse', tonumber(id))
     return row and LookOf(SV.FormatHorse(row)) or nil
