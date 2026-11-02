@@ -95,6 +95,22 @@ function FKS.GetCoat(id)
     return e and e.coat, e and e.breed
 end
 
+-- jobs, groups that can buy this coat (Config.HorseShopAccess; nil, nil = everyone)
+function FKS.CoatAccess(coat, breed)
+    if coat.jobs or coat.groups then return coat.jobs, coat.groups end
+    local A = Config.HorseShopAccess or {}
+    for _, rule in ipairs({
+        { (A.coats or {})[coat.id] },
+        { (A.breeds or {})[breed] },
+        { (A.tiers or {})[coat.tier] },
+    }) do
+        local r = rule[1]
+        if r == false then return nil, nil end
+        if r then return r.jobs, r.groups end
+    end
+    return nil, nil
+end
+
 function FKS.GetWagon(model)
     local e = model and FKS.WagonByModel[model:lower()]
     return e and e.wagon, e and e.category

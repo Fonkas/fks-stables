@@ -185,7 +185,7 @@ local function BuildShop(src, P)
     for _, b in ipairs(Config.Horses) do
         local coats = {}
         for _, c in ipairs(b.coats) do
-            if c.enabled and (c.cash > 0 or c.gold > 0) and HasAccess(src, P, c.jobs, c.groups) then
+            if c.enabled and (c.cash > 0 or c.gold > 0) and HasAccess(src, P, FKS.CoatAccess(c, b.breed)) then
                 coats[#coats + 1] = {
                     id = c.id, model = c.model, label = c.label, cash = c.cash, gold = c.gold, tier = c.tier,
                     storage = c.storage, pelts = c.pelts, canBreed = c.canBreed, outfit = c.outfit,
@@ -277,8 +277,8 @@ Callback.Register('fks-stables:buyHorse', function(src, stableId, coatId, curren
     local P = GetP(src); if not P then return false end
     local stable = StableAccess(src, P, stableId)
     if not stable or not stable.services.buyHorses then return false, _L('no_access') end
-    local coat = FKS.GetCoat(coatId)
-    if not coat or not coat.enabled or not HasAccess(src, P, coat.jobs, coat.groups) then return false, _L('no_permission') end
+    local coat, coatBreed = FKS.GetCoat(coatId)
+    if not coat or not coat.enabled or not HasAccess(src, P, FKS.CoatAccess(coat, coatBreed)) then return false, _L('no_permission') end
     local price = currency == 'gold' and coat.gold or coat.cash
     if price <= 0 then return false, _L('no_permission') end
     name = CleanName(name); if not name then return false, _L('invalid_name') end

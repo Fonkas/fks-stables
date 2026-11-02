@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0
+
+- **Job-only horses:** `Config.HorseShopAccess` (end of `config/horses.lua`) restricts horses in the shop to jobs
+  and/or groups by **breed**, **single coat** or **class (tier)** — e.g. a breed only the `emeraldbreeder` job can buy.
+  The most specific rule wins (coat's own `jobs`/`groups` > `coats` > `breeds` > `tiers`); `false` opens one coat to
+  everyone inside a restricted breed. Checked on the server when buying too.
+- No database changes.
+
 ## 1.4.0
 
 - **No more ox_lib.** fks-core and oxmysql are the only dependencies: remove `ensure ox_lib` if no other script uses it.

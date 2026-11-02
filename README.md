@@ -225,7 +225,7 @@ hammer               = { name = 'hammer',               label = 'Hammer',       
 | `config/main.lua` | language, framework, keys, prices, needs, care, revive, wild horses, XP, aging, wagons |
 | `config/trainer.lua` | trainer job, training courses / load points, courage, affinity, class stats, special horses, transfer, breeding, foals |
 | `config/stables.lua` | stables (every field explained) |
-| `config/horses.lua` | horse shop: breeds and coats (price, class, storage, look) |
+| `config/horses.lua` | horse shop: breeds and coats (price, class, storage, look), job-only horses (`Config.HorseShopAccess`) |
 | `config/wagons.lua` | wagon shop and per-model customisation |
 | `config/components.lua` | tack pieces per category and colour palettes |
 | `config/animals.lua` | carcasses and pelts that fit in hunting wagons |
@@ -233,6 +233,20 @@ hammer               = { name = 'hammer',               label = 'Hammer',       
 
 ### Adding a stable
 Copy a stable block in `config/stables.lua` and change the id, label and coordinates. Every field is commented.
+
+### Job-only horses
+At the end of `config/horses.lua`, `Config.HorseShopAccess` limits who sees and buys horses in the shop — by
+breed, by single coat or by class:
+```lua
+Config.HorseShopAccess = {
+    breeds = { ["Arabian"] = { jobs = { "emeraldbreeder" } } },        -- whole breed
+    coats  = { ["A_C_Horse_Arabian_Grey"] = false,                      -- this one stays public
+               ["A_C_Horse_Kladruber_Silver1"] = { jobs = { "emeraldbreeder" } } },
+    tiers  = { [4] = { jobs = { "emeraldbreeder" }, groups = { "admin" } } }, -- every class IV horse
+}
+```
+The most specific rule wins: `jobs` / `groups` on the coat itself > `coats` > `breeds` > `tiers`. Players without
+the job don't see those horses, and the server refuses the purchase.
 
 ---
 

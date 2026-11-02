@@ -4951,3 +4951,28 @@ Config.Horses = {
         },
     },
 }
+
+-- Who can buy which horses in the shop, without editing each coat above.
+--[[
+    Restrict a whole breed (category), single coats or a whole class (tier) to jobs and/or groups.
+    The most specific rule wins:  jobs/groups on the coat itself  >  coats  >  breeds  >  tiers.
+    No rule = everyone can buy it. A rule = { jobs = {...}, groups = {...} } (either one, or both).
+    false = open to everyone (e.g. one public coat inside a restricted breed).
+
+    Examples:
+      breeds = { ["Arabian"] = { jobs = { "emeraldbreeder" } } }                -> only emeraldbreeder sees Arabians
+      coats  = { ["A_C_Horse_Arabian_White"] = { jobs = { "emeraldbreeder", "staff" } } }
+      coats  = { ["A_C_Horse_Arabian_Grey"] = false }                           -> this Arabian is for everyone
+      tiers  = { [4] = { jobs = { "emeraldbreeder" } } }                        -> class IV only for emeraldbreeder
+]]
+Config.HorseShopAccess = {
+    breeds = {
+        -- ["Special Horses"] = { jobs = { "emeraldbreeder" } },
+    },
+    coats = {
+        -- ["A_C_Horse_Kladruber_Silver1"] = { jobs = { "emeraldbreeder" } },
+    },
+    tiers = {
+        -- [4] = { jobs = { "emeraldbreeder" } },
+    },
+}
