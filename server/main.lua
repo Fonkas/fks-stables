@@ -133,19 +133,25 @@ local function FormatHorse(r)
     local foal = bred and age ~= nil and age < adult
     local breedingUntil = (meta.breedingUntil or 0) > now and meta.breedingUntil or nil
     local breedWait = math.max(0, (meta.bredAt or 0) + ((Config.Breeding or {}).cooldown or 0) - now)
+    -- Config.MaxAgeAction: worked out from the age, nothing is saved (switching back to 'none' undoes it)
+    local maxAct = Config.MaxAgeAction or 'none'
+    local atMax = maxAct ~= 'none' and age ~= nil and Config.Aging.maxAge ~= nil and age >= Config.Aging.maxAge
+    local retired = atMax and maxAct == 'retire'
+    local oldDeath = atMax and maxAct == 'die'
     return {
+        retired = retired, oldDeath = oldDeath,
         courage = math.floor((r.courage or 0) * 10) / 10, affinity = math.floor((r.affinity or 0) * 10) / 10,
         special = special, foal = foal,
         bred = bred,
         scale = foal and FKS.Clamp((F.minScale or 0.5) + (1 - (F.minScale or 0.5)) * (age / adult), F.minScale or 0.5, 1.0) or 1.0,
-        rideable = not bred or age == nil or age >= (F.rideAge or adult),
+        rideable = (not bred or age == nil or age >= (F.rideAge or adult)) and not atMax,
         agePerSec = Config.Aging.enabled and 1 / (Config.Aging.hoursPerYear * 3600) or 0,
         breedingUntil = breedingUntil, breedWait = breedWait,
         pregnant = breedingUntil ~= nil and r.gender == 'female',
         pregnantOut = breedingUntil ~= nil and r.gender == 'female' and PregnantCanLeave(),
         canBreed = coat.canBreed ~= false and not (special and Config.Special and not Config.Special.canBreed)
             and not foal and (age == nil or age >= ((Config.Breeding or {}).minAge or 5)) and not On(r.dead)
-            and not breedingUntil and breedWait == 0,
+            and not breedingUntil and breedWait == 0 and not atMax,
         canGive = not (special and Config.Special and not Config.Special.canGive),
         id = r.id, name = r.name, breed = breed, coatId = r.coat_id, coatLabel = coat.label,
         model = coat.model, outfit = coat.outfit, tier = coat.tier, storage = coat.storage, pelts = coat.pelts,
@@ -153,7 +159,7 @@ local function FormatHorse(r)
         bond = FKS.BondLevel(r.bond), bondXp = r.bond,
         age = age and math.floor(age * 10) / 10, old = age and age >= Config.Aging.oldAge or false,
         health = r.health, stamina = r.stamina, hunger = r.hunger, thirst = r.thirst, dirt = r.dirt, hoof = r.hoof or 100,
-        dead = On(r.dead), active = On(r.active), spawned = On(r.spawned),
+        dead = On(r.dead) or oldDeath, active = On(r.active), spawned = On(r.spawned),
         stable = r.stable, stableLabel = s and s.label or r.stable,
         components = Decode(r.components, {}),
         coat = custom.coat or coat.coat, maneTail = custom.maneTail or coat.maneTail,
@@ -267,7 +273,10 @@ Callback.Register('fks-stables:getActive', function(src, kind)
     if kind == 'wagon' then row = DB.ActiveWagon(Cid(P)) else row = DB.ActiveHorse(Cid(P)) end
     if not row then return nil, kind == 'wagon' and 'no_active_wagon' or 'no_active_horse' end
     if kind == 'wagon' then return FormatWagon(row) end
-    return FormatHorse(row)
+    local h = FormatHorse(row)
+    if h and h.oldDeath then return nil, 'horse_old_death_active' end   -- Config.MaxAgeAction
+    if h and h.retired then return nil, 'horse_retired_active' end
+    return h
 end)
 
 ---------------------------------------------------------------------------
@@ -352,6 +361,9 @@ Callback.Register('fks-stables:takeOut', function(src, kind, id, stableId)
         DB.UpdateWagon(id, { spawned = 1, stable = stableId })
         return true, FormatWagon(DB.Wagon(id))
     end
+    local fh = FormatHorse(row)
+    if fh and fh.oldDeath then return false, _L('horse_old_death', row.name) end   -- Config.MaxAgeAction
+    if fh and fh.retired then return false, _L('horse_retired', row.name) end
     if On(row.dead) then return false, _L('horse_dead') end
     if (Decode(row.meta, {}).breedingUntil or 0) > os.time() and not (row.gender == 'female' and PregnantCanLeave()) then
         return false, _L('horse_breeding')
@@ -378,6 +390,8 @@ Callback.Register('fks-stables:heal', function(src, id, stableId)
     local P = GetP(src); if not P then return false end
     local row = Owned(P, 'horse', id); if not row then return false, _L('not_owner') end
     local h = FormatHorse(row)
+    if not h then return false end
+    if h.oldDeath then return false, _L('horse_old_death', row.name) end   -- Config.MaxAgeAction
     local ok, err = Charge(P, 'cash', h.heal, 'fks-stables:heal')
     if not ok then return false, err end
     local fields = { dead = 0, health = 100, stamina = 100 }
@@ -646,6 +660,8 @@ Callback.Register('fks-stables:reviveHorse', function(src, netId, ownId)
     if ent and #(GetEntityCoords(GetPlayerPed(src)) - GetEntityCoords(ent)) > 5.0 then return false, _L('horse_too_far') end
     local row = DB.Horse(id)
     if not row or not On(row.dead) then return false, _L('horse_not_dead') end
+    local fh = FormatHorse(row)
+    if fh and fh.oldDeath then return false, _L('horse_old_death', row.name) end   -- Config.MaxAgeAction
     if Reviving[id] then return false, _L('horse_reviving') end
     if not Bridge.RemoveItem(src, item, 1) then return false, _L('no_reviver') end
 

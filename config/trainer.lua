@@ -139,6 +139,13 @@ Config.Breeding = {
     minAge = 5,                     -- minimum age of the parents
     price = 0,                      -- cost (cash)
     foalName = 'Foal',              -- foal name (rename it at the stable)
+    -- world display (only for the owner, local peds that cannot be ridden or moved)
+    showParentsInWorld = true,      -- the parents stand at the stable's breeding spot until the foal is born (false = hidden)
+    showFoalInWorld = true,         -- the newborn foal shows at the breeding spot for 3 minutes (false = hidden)
+    -- several breedings at the same stable: each pair gets its own spot. Set breed.slots in config/stables.lua
+    -- (list of { left = {...}, right = {...} }); without it, the pairs line up from breed.left / breed.right:
+    worldSlots = 3,                 -- max pairs shown per stable (extra breedings are not shown)
+    slotSpacing = 2.5,              -- gap (m) between one pair and the next
     -- the mare is pregnant until the foal is born (the stallion is free right after breeding)
     pregnancy = {
         canLeave = true,            -- the pregnant mare can be taken out and ridden (false = stays at the stable)

@@ -134,6 +134,7 @@ local function horseBadges(h)
     if h.active and h.spawned then b[#b + 1] = { text = T('active'), tone = 'gold' } end
     if h.dead then b[#b + 1] = { text = T('injured'), tone = 'bad' } end
     if h.old then b[#b + 1] = { text = T('old') } end
+    if h.retired then b[#b + 1] = { text = T('retired'), tone = 'bad' } end
     if h.special then b[#b + 1] = { text = T('special'), tone = 'gold' } end
     if h.foal then b[#b + 1] = { text = T('foal') } end
     if h.breedingUntil then b[#b + 1] = { text = T(h.pregnant and 'pregnant' or 'breeding_now'), tone = 'gold' } end
@@ -179,11 +180,11 @@ function Pages.myHorses()
     local locked = not h.here
     local actions = {
         { label = T('a_take'), icon = 'take', action = 'takeOut', value = { kind = 'horse', id = h.id },
-          disabled = locked or h.dead or (h.breedingUntil ~= nil and not h.pregnantOut) },
+          disabled = locked or h.dead or h.retired or (h.breedingUntil ~= nil and not h.pregnantOut) },
     }
     if svc('customize') then actions[#actions + 1] = { label = T('a_equip'), icon = 'saddle', action = 'equipStart', value = h.id, disabled = locked } end
     if svc('coloring') and data().canColor then actions[#actions + 1] = { label = T('a_coat'), icon = 'palette', action = 'coatStart', value = h.id, disabled = locked } end
-    actions[#actions + 1] = { label = T('a_heal'), icon = 'heal', action = 'heal', value = h.id, disabled = not (h.dead or (h.health or 100) < 100),
+    actions[#actions + 1] = { label = T('a_heal'), icon = 'heal', action = 'heal', value = h.id, disabled = h.oldDeath or not (h.dead or (h.health or 100) < 100),
         confirm = { title = T('a_heal'), text = T('heal_confirm', h.name, fmt(h.heal)), ok = T('confirm'), cancel = T('cancel') } }
     for _, a in ipairs(commonActions('horse', h)) do actions[#actions + 1] = a end
 
@@ -228,6 +229,7 @@ local function breedReason(h)
     if h.breedingUntil then return T(h.pregnant and 'pregnant' or 'breed_r_busy') end
     if (h.breedWait or 0) > 0 then return T('breed_r_wait', math.ceil(h.breedWait / 60)) end
     if h.dead then return T('injured') end
+    if h.retired then return T('retired') end
     return T('breed_r_no')
 end
 

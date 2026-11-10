@@ -657,13 +657,23 @@ Config.Bond = {
 ---------------------------------------------------------------------------
 -- Age
 ---------------------------------------------------------------------------
+-- Horses age in REAL time (os.time on the server), not in game time: with hoursPerYear = 24 a horse gets one
+-- year older every 24 real hours, whether the server or the player is online or not.
 Config.Aging = {
     enabled = true,
     hoursPerYear = 24,          -- real hours for the horse to age one year
     startAge = { 5, 5 },        -- age of a bought horse (min, max)
     oldAge = 25,                -- "old" from this age on
-    maxAge = 30,                -- (reserved)
+    maxAge = 30,                -- age used by Config.MaxAgeAction
 }
+
+-- What happens when a horse reaches Config.Aging.maxAge:
+--   'none'   nothing (the age keeps counting; current behaviour)
+--   'retire' the horse stays at the stable: it cannot be taken out, called or bred (it can still be sold / transferred)
+--   'die'    the horse dies of old age: shown as dead, cannot be taken out, called, bred, treated or revived
+-- Nothing is deleted from the database: setting 'none' again brings the horses back. A horse that is out in the world
+-- when it reaches the age is not removed on the spot; the rule applies the next time it is called or taken out.
+Config.MaxAgeAction = 'none'
 
 ---------------------------------------------------------------------------
 -- Wagons
@@ -671,6 +681,13 @@ Config.Aging = {
 Config.Wagon = {
     callFromStableOnly = true,  -- true: wagons are only taken out at the stable
     spawnDelay = 3,             -- seconds preparing the wagon
+    -- before a wagon appears: snap the point to the ground and, if a vehicle or ped is in the way (e.g. the stable
+    -- hand), try small offsets { side, forward } in metres from the point (relative to its heading)
+    safeSpawn = {
+        enabled = true,
+        radius = 3.5,               -- free radius needed (peds); vehicles need radius + 1.5
+        offsets = { { 0, 0 }, { 0, 4 }, { 0, -4 }, { 4, 0 }, { -4, 0 }, { 0, 8 }, { 0, -8 } },
+    },
     returnDistance = 30.0,      -- distance to the stable to store it
     sendAway = true,            -- true: away from a stable, the same prompt (X) sends the wagon to the stable where it was stored
     saveHealth = true,

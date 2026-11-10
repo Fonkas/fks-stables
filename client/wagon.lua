@@ -62,6 +62,36 @@ local function RoadPointNear(big)
     return vector4(off.x, off.y, off.z, GetEntityHeading(PlayerPedId()) + 90.0)
 end
 
+-- free spot near "at": snaps to the ground and, if vehicles / peds are in the way, tries small offsets
+-- (Config.Wagon.safeSpawn). Returns "at" unchanged when disabled or when no free spot is found.
+local function FreeSpot(at)
+    local S = W.safeSpawn
+    if not S or S.enabled == false then return at end
+    local radius = S.radius or 3.5
+    local me = PlayerPedId()
+    local mount = GetMount(me)
+    local function Busy(p)
+        for _, v in ipairs(GetGamePool('CVehicle')) do
+            if #(GetEntityCoords(v) - p) < radius + 1.5 then return true end
+        end
+        for _, ped in ipairs(GetGamePool('CPed')) do
+            if ped ~= me and ped ~= mount and not IsPedDeadOrDying(ped, true) and #(GetEntityCoords(ped) - p) < radius then
+                return true
+            end
+        end
+        return false
+    end
+    local h = math.rad(at.w)
+    local fwd, side = vector3(-math.sin(h), math.cos(h), 0.0), vector3(math.cos(h), math.sin(h), 0.0)
+    for _, o in ipairs(S.offsets or { { 0, 0 }, { 0, 4 }, { 0, -4 }, { 4, 0 }, { -4, 0 }, { 0, 8 }, { 0, -8 } }) do
+        local p = vector3(at.x, at.y, at.z) + side * o[1] + fwd * o[2]
+        local found, gz = GetGroundZFor_3dCoord(p.x, p.y, p.z + 2.0, false)
+        if found and math.abs(gz - p.z) < 5.0 then p = vector3(p.x, p.y, gz) end
+        if not Busy(p) then return vector4(p.x, p.y, p.z, at.w) end
+    end
+    return at
+end
+
 -- quick = recreate in the same place (after repairing): no wait nor notice
 function Wagon.Spawn(data, at, quick)
     if Wagon.spawning then return end
@@ -75,6 +105,7 @@ function Wagon.Spawn(data, at, quick)
     local hash = Look.LoadModel(data.model)
     if not hash then Wagon.spawning = false return end
     at = at or RoadPointNear(data.big)
+    if not quick then at = FreeSpot(at) end
 
     local veh = CreateVehicle(hash, at.x, at.y, at.z, at.w, true, true, false, false)
     local t = GetGameTimer() + 3000

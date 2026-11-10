@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.5.1
+
+- **Breeding parents no longer stack:** each breeding in progress at a stable gets its own spot. Set
+  `breed.slots = { { left, right }, ... }` on a stable, or the pairs line up beside `breed.left` / `breed.right`
+  (`Config.Breeding.worldSlots`, `slotSpacing`). Extra breedings are not shown.
+- `Config.Breeding.showParentsInWorld` / `showFoalInWorld` (default `true`) hide the parents during the pregnancy
+  and the newborn foal at the breeding spot.
+- **Fixed a ped leak in the breeding menu:** switching horses quickly or closing the menu while a horse was loading
+  left a frozen horse behind. The menu now drops stale loads and removes any leftover showroom horse on close.
+- **Safer wagon spawn:** the point snaps to the ground and, if a vehicle or ped is in the way, small offsets are
+  tried (`Config.Wagon.safeSpawn`).
+- `Config.MaxAgeAction` = `'none'` (default, unchanged) | `'retire'` | `'die'`: what happens at `Config.Aging.maxAge`.
+  Worked out from the age only, nothing is deleted. Aging is in real time (comment added to the config).
+- **Fixed outlier horse prices** (`config/horses.lua`, brought in line with the other coats of the breed):
+  Norfolk Roadster Speckled Grey 2500, Breton Grullo Dun 3000, Breton Steel Black / Steel Bay 3500,
+  Shire Buckskin / Bay 3000, Shire "Gigante" 3500, Mustang Black Dun / BrownNuts 3000,
+  Missouri Fox Trotter Dapple Pinto Bay / Red 4500, Appaloosa Leopard 1300.
+- Saint Denis spawn and Valentine showroom camera marked `-- TODO: rever in-game` in `config/stables.lua`.
+- No database changes.
+
 ## 1.5.0
 
 - **Job-only horses:** `Config.HorseShopAccess` (end of `config/horses.lua`) restricts horses in the shop to jobs

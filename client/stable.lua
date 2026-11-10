@@ -247,6 +247,7 @@ function Stable.Close()
     UI.Close()
     ClearPreview()
     if Stable.ClearBreed then pcall(Stable.ClearBreed) end -- (defined further below: an error here left the camera stuck)
+    if Stable.SweepShowcase then pcall(Stable.SweepShowcase) end
     if Stable.cam then
         RenderScriptCams(false, true, 600, true, true)
         DestroyCam(Stable.cam, false)
@@ -283,6 +284,7 @@ Stable.HorseLook = HorseLook
 -- Breeding: showroom with the female (left) and the male (right) at the stable's "breed" spot
 ---------------------------------------------------------------------------
 local breedPeds = {}   -- [slot] = { ped, id }
+local menuPeds = {}    -- [ped] = true: every showroom ped created by the breeding menu (safety net on close)
 
 local function ClearBreed()
     for slot, e in pairs(breedPeds) do
@@ -292,11 +294,25 @@ local function ClearBreed()
 end
 Stable.ClearBreed = ClearBreed
 
+-- deletes the breeding-menu peds that are not in use (e.g. created while the menu was closing)
+function Stable.SweepShowcase()
+    local used = {}
+    for _, e in pairs(breedPeds) do used[e.ped] = true end
+    for ped in pairs(menuPeds) do
+        if not used[ped] then
+            if DoesEntityExist(ped) then DeleteEntity(ped) end
+            menuPeds[ped] = nil
+        end
+    end
+end
+
 -- creates a "showroom" horse (this client only) at a position {x, y, z, heading}
-local function ShowcasePed(model, look, pos)
+-- registry (optional): table where the ped is recorded as soon as it exists (before the look yields)
+local function ShowcasePed(model, look, pos, registry)
     local hash = Look.LoadModel(model)
     if not hash then return nil end
     local ped = CreatePed(hash, pos[1], pos[2], pos[3], pos[4] or 0.0, false, false, false, false)
+    if registry then registry[ped] = true end
     SetEntityInvincible(ped, true)
     SetBlockingOfNonTemporaryEvents(ped, true)
     FreezeEntityPosition(ped, true)
@@ -311,6 +327,7 @@ function Stable.ShowBreed(femaleId, maleId)
     local b = Stable.current and Stable.current.breed
     if not b then return end
     Stable.token = Stable.token + 1
+    local my = Stable.token
     ClearPreview()
     -- breeding camera, looking at the middle of the two
     local mid = vector3((b.left[1] + b.right[1]) / 2, (b.left[2] + b.right[2]) / 2, (b.left[3] + b.right[3]) / 2)
@@ -330,8 +347,15 @@ function Stable.ShowBreed(femaleId, maleId)
             breedPeds[slot] = nil
         elseif not cur or cur.id ~= id or not DoesEntityExist(cur.ped) then
             if cur and DoesEntityExist(cur.ped) then DeleteEntity(cur.ped) end
+            breedPeds[slot] = nil
             local h = FindOwned('horse', id)
-            local ped = h and ShowcasePed(h.model, HorseLook(h), b[slot])
+            local ped = h and ShowcasePed(h.model, HorseLook(h), b[slot], menuPeds)
+            -- ShowcasePed yields (model + look): another horse was picked or the menu closed meanwhile
+            if my ~= Stable.token or not Stable.open then
+                if ped and DoesEntityExist(ped) then DeleteEntity(ped) end
+                if ped then menuPeds[ped] = nil end
+                return
+            end
             breedPeds[slot] = ped and { ped = ped, id = id } or nil
         end
     end
@@ -469,6 +493,33 @@ function Breeding.Refresh()
     Breeding.pending = list
 end
 
+local function BreedCfg() return Config.Breeding or {} end
+
+-- spot of the n-th breeding in progress at a stable: { left, right } or nil (more breedings than spots)
+-- 1) breed.slots = { { left = {...}, right = {...} }, ... } in config/stables.lua
+-- 2) fallback: breed.left / breed.right moved sideways (along left -> right) by index, up to Config.Breeding.worldSlots
+local function BreedSlot(breed, n)
+    if breed.slots and #breed.slots > 0 then
+        local sl = breed.slots[n]
+        return sl and sl.left and sl.right and sl or nil
+    end
+    if n > (BreedCfg().worldSlots or 3) then return nil end
+    if n == 1 then return { left = breed.left, right = breed.right } end
+    local l, r = breed.left, breed.right
+    local axis = vector3(r[1] - l[1], r[2] - l[2], 0.0)
+    local len = #axis
+    if len < 0.01 then axis, len = vector3(1.0, 0.0, 0.0), 0.0 end
+    axis = axis / #axis
+    local step = len + (BreedCfg().slotSpacing or 2.5)  -- width of a pair + gap
+    local function At(p)
+        local x, y = p[1] + axis.x * step * (n - 1), p[2] + axis.y * step * (n - 1)
+        local found, gz = GetGroundZFor_3dCoord(x, y, p[3] + 1.5, false)
+        return { x, y, (found and math.abs(gz - p[3]) < 3.0) and gz or p[3], p[4] or 0.0 }
+    end
+    return { left = At(l), right = At(r) }
+end
+Breeding.Slot = BreedSlot
+
 CreateThread(function()
     Wait(5000)
     Breeding.Refresh()
@@ -478,16 +529,30 @@ CreateThread(function()
         if GetGameTimer() - lastRefresh > 60000 then Breeding.Refresh() lastRefresh = GetGameTimer() end
         local pos = GetEntityCoords(PlayerPedId())
         local want = {}
-        if not Stable.open then
+        if not Stable.open and BreedCfg().showParentsInWorld ~= false then
+            -- each breeding in progress gets its own spot at its stable (oldest first)
+            local byStable = {}
             for _, b in ipairs(Breeding.pending) do
-                local s = FKS.StableById[b.stable]
-                local key = 'b' .. b.id
-                if s and s.breed and GetGameTimer() < b.readyAt and #(pos - vector3(s.breed.left[1], s.breed.left[2], s.breed.left[3])) < 60.0 then
-                    want[key] = true
-                    if not shown[key] then
-                        local m = b.mother and ShowcasePed(b.mother.model, b.mother, s.breed.left)
-                        local f = b.father and ShowcasePed(b.father.model, b.father, s.breed.right)
-                        shown[key] = { m, f }
+                if GetGameTimer() < b.readyAt then
+                    byStable[b.stable] = byStable[b.stable] or {}
+                    table.insert(byStable[b.stable], b)
+                end
+            end
+            for stableId, list in pairs(byStable) do
+                local s = FKS.StableById[stableId]
+                if s and s.breed and #(pos - vector3(s.breed.left[1], s.breed.left[2], s.breed.left[3])) < 60.0 then
+                    table.sort(list, function(a, c) return a.id < c.id end)
+                    for n, b in ipairs(list) do
+                        local key = 'b' .. b.id
+                        if shown[key] and shown[key].slot ~= n then Unshow(key) end -- an older breeding ended: move up
+                        local sl = BreedSlot(s.breed, n)
+                        if not sl then break end -- more breedings than spots: only the first ones show
+                        want[key] = true
+                        if not shown[key] then
+                            local m = b.mother and ShowcasePed(b.mother.model, b.mother, sl.left)
+                            local f = b.father and ShowcasePed(b.father.model, b.father, sl.right)
+                            shown[key] = { m, f, slot = n }
+                        end
                     end
                 end
             end
@@ -502,6 +567,7 @@ end)
 -- a foal was born: if you are near the stable, it shows at the breeding spot for a few minutes
 RegisterNetEvent('fks-stables:client:foalBorn', function(stableId, horseId)
     Breeding.Refresh()
+    if BreedCfg().showFoalInWorld == false then return end
     local s = FKS.StableById[stableId]
     if not s or not s.breed then return end
     local b = s.breed

@@ -27,6 +27,12 @@ Config.Stables = {
             camera = { -865.64, -1365.76, 46.21, -0.63 },  -- camera position while picking the pair
             left = { -866.39, -1361.78, 42.46, -177.0 },   -- where the female stands
             right = { -864.4, -1362.0, 42.46, -177.0 },    -- where the male stands (the foal appears between them)
+            -- optional: own spot for each breeding in progress (parents shown in the world, Config.Breeding.showParentsInWorld)
+            -- slots = {
+            --     { left = { x, y, z, h }, right = { x, y, z, h } },
+            --     { left = { x, y, z, h }, right = { x, y, z, h } },
+            -- },
+            -- without slots, extra pairs line up beside left / right (Config.Breeding.worldSlots / slotSpacing)
         },
 
         -- hours = { 6, 22 },               -- optional: { opens, closes } in game hours (nil = always open)
@@ -48,8 +54,8 @@ Config.Stables = {
         label = 'Valentine Stables',
         blip = true,
         npc = { model = 'u_m_m_bwmstablehand_01', coords = { -366.26, 790.76, 115.2, 187.53 } },
-        camera = { -366.0, 788.0, 117.0, 277.88 },
-        preview = { -368.52, 786.96, 115.16, 277.88 },
+        camera = { -366.0, 788.0, 117.0, 277.88 },     -- TODO: rever in-game (wagon shop camera faces a door; no wagonPreview set)
+        preview = { -368.52, 786.96, 115.16, 277.88 }, -- TODO: rever in-game (wagons use this spot too)
         spawn = { -353.46, 797.47, 116.17, 181.14 },
         breed = {
             camera = { -368.52, 786.96, 118.16, 277.88 },
@@ -80,7 +86,7 @@ Config.Stables = {
         npc = { model = 'u_m_m_bwmstablehand_01', coords = { 2506.05, -1459.82, 45.32, 96.34 } },
         camera = { 2504.0, -1456.0, 47.0, 179.25 },
         preview = { 2503.22, -1454.04, 45.31, 179.25 },
-        spawn = { 2506.05, -1459.82, 46.32, 96.34 },
+        spawn = { 2506.05, -1459.82, 46.32, 96.34 },   -- TODO: rever in-game (same x/y as the NPC: horses spawn on top of him, wagons break)
         breed = {
             camera = { 2503.22, -1454.04, 48.31, 179.25 },
             left = { 2501.22, -1456.04, 45.31, 359.25 },
