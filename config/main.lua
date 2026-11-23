@@ -110,6 +110,7 @@ Config.Prompts = {
     talk        = 0xCEFD9220, -- E   talk to the stable hand
     wagonReturn = 0x8CC9CD42, -- X   (hold) store the wagon near a stable / send it away (Config.Wagon.sendAway)
     wagonRepair = 0x26E9DC00, -- Z   (hold) repair the wagon
+    wagonGive   = 0x9959A6F0, -- C   (hold) transfer the wagon to another player (per wagon: canGive in config/wagons.lua)
     wagonDistance = 1.6,      -- distance to the wagon's "box" to show the prompts
     wagonRear = 1.2,          -- how far behind the wagon the "manage animals" area is
     horseTab = 0,             -- page of the horse menu where the prompts go (0 = first)

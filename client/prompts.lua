@@ -215,7 +215,7 @@ end)
 
 local function Ids(veh)
     local own = veh == Wagon.veh
-    return NetworkGetNetworkIdFromEntity(veh), own and Wagon.id or nil
+    return FKS.NetId(veh), own and Wagon.id or nil
 end
 
 local function Carrying()
@@ -345,6 +345,7 @@ CreateThread(function()
     wp.animals = Make(WG, K.wagonAnimals, _L('w_manage_animals'))
     wp.ret = Make(WG, K.wagonReturn, _L('t_wagon_return'), true)
     wp.repair = Make(WG, K.wagonRepair, _L('t_wagon_repair'), true)
+    wp.give = Make(WG, K.wagonGive or 0x9959A6F0, _L('t_wagon_give'), true)
     while true do
         local n = near
         if n and DoesEntityExist(n.veh) and OnFoot() then
@@ -372,6 +373,9 @@ CreateThread(function()
                 PromptSetText(wp.repair, Var(isBroken and _L('t_wagon_fix') or _L('t_wagon_repair')))
             end
             Show(wp.repair, own and not carrying and (isBroken or (Config.Wagon.repairItem ~= nil and GetEntityHealth(veh) < 1000)))
+            -- "Transfer wagon": only your own wagon, and only if its config allows it (canGive)
+            local canGive = own and not carrying and Wagon.id ~= nil and cfg ~= nil and cfg.canGive ~= false
+            Show(wp.give, canGive)
             -- title: "Name - Durability 64%" (or "Broken")
             local name = (own and Wagon.data and Wagon.data.name) or (cfg and cfg.label) or _L('t_wagon_store')
             local state = isBroken and _L('label_broken') or _L('label_durability', Wagon.Durability(veh))
@@ -388,6 +392,8 @@ CreateThread(function()
                 Wait(300)
             elseif own and Done(wp.repair, true) then
                 Wagon.Repair(); Wait(300)
+            elseif canGive and Done(wp.give, true) then
+                CreateThread(Wagon.GiveMenu); Wait(300)
             end
         else
             Wait(250)

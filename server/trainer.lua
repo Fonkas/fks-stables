@@ -132,6 +132,43 @@ Callback.Register('fks-stables:giveHorse', function(src, horseId, target)
 end)
 
 ---------------------------------------------------------------------------
+-- Give the wagon to another player (wagons with canGive = false in config/wagons.lua cannot be given)
+---------------------------------------------------------------------------
+Callback.Register('fks-stables:giveWagon', function(src, wagonId, target, health)
+    local P = SV.GetP(src); if not P then return false end
+    wagonId, target = tonumber(wagonId), tonumber(target)
+    local row = wagonId and SV.Owned(P, 'wagon', wagonId)
+    if not row then return false, _L('not_owner') end
+    local w = FKS.GetWagon(row.model)
+    if not w or w.canGive == false then return false, _L('wgive_blocked') end
+    if not target or target == src or GetPlayerPing(target) <= 0 then return false, _L('access_offline') end
+    local TP = SV.GetP(target)
+    if not TP then return false, _L('access_offline') end
+    if #(GetEntityCoords(GetPlayerPed(src)) - GetEntityCoords(GetPlayerPed(target))) > Config.Give.maxDistance then
+        return false, _L('give_far')
+    end
+    local lim = SV.Limits(TP).wagons
+    if DB.CountWagons(TP.cid) >= lim then return false, _L('wgive_full', TP.name) end
+
+    local fields = { citizenid = TP.cid, active = 0, spawned = 0, position = 'null' }
+    -- the wagon is out: it leaves the old owner's world (keeps its durability)
+    if SV.WagonOut[src] == wagonId then
+        SV.WagonOut[src] = nil
+        if SV.Spawned[src] then SV.Spawned[src].wagon = nil end
+        if Config.Wagon.saveHealth and tonumber(health) then fields.health = FKS.Clamp(math.floor(tonumber(health)), 0, 1000) end
+        TriggerClientEvent('fks-stables:client:wagonGiven', src, wagonId)
+    end
+    -- the storage access list belonged to the old owner (contents and stored animals go with the wagon)
+    local meta = SV.Decode(row.meta, {})
+    meta.access = {}
+    fields.meta = json.encode(meta)
+    DB.UpdateWagon(wagonId, fields)
+    if not DB.ActiveWagon(TP.cid) then DB.SetActiveWagon(TP.cid, wagonId) end
+    SV.Notify(target, _L('wgive_received', row.name, P.name or GetPlayerName(src)), 'success')
+    return true, _L('wgive_done', row.name, TP.name or GetPlayerName(target))
+end)
+
+---------------------------------------------------------------------------
 -- Breeding
 ---------------------------------------------------------------------------
 local function RandomCoat(breedA, breedB)

@@ -1277,5 +1277,5 @@ end)
 SV = {
     GetP = GetP, Cid = Cid, On = On, Notify = Notify, Decode = Decode, CleanName = CleanName, InList = InList,
     Limits = Limits, Charge = Charge, Owned = Owned, Row = Row, FormatHorse = FormatHorse, StableAccess = StableAccess,
-    IsTrainer = IsTrainer, HorseOut = HorseOut, Spawned = Spawned, StashId = StashId,
+    IsTrainer = IsTrainer, HorseOut = HorseOut, WagonOut = WagonOut, Spawned = Spawned, StashId = StashId,
 }

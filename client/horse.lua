@@ -250,12 +250,14 @@ function Horse.Spawn(data, at, fromStable, dead)
     -- wait until the horse is registered on the network: before that the netId is invalid and the server
     -- never finds it (it stayed without the fksHorse mark and could not be revived / have its saddlebags opened by others)
     local nt = GetGameTimer() + 3000
-    while not NetworkGetEntityIsNetworked(ped) and GetGameTimer() < nt do
+    while DoesEntityExist(ped) and not NetworkGetEntityIsNetworked(ped) and GetGameTimer() < nt do
         NetworkRegisterEntityAsNetworked(ped)
         Wait(50)
     end
-    local netId = NetworkGetNetworkIdFromEntity(ped)
-    SetNetworkIdExistsOnAllMachines(netId, true)
+    -- deleted / replaced while it was being set up (e.g. called again at login): stop here
+    if not DoesEntityExist(ped) or Horse.ped ~= ped then return end
+    local netId = FKS.NetId(ped)
+    if netId ~= 0 then SetNetworkIdExistsOnAllMachines(netId, true) end
     -- also mark the horse from here (the server sets it again once the entity gets there)
     local st = Entity(ped).state
     st:set('fksHorse', data.id, true)
@@ -438,7 +440,7 @@ function Horse.OpenBags(ent, ownKind, ownId)
     local t = GetGameTimer() + 3000
     while GetGameTimer() < t and (B(IsPauseMenuActive()) or LocalPlayer.state.inv_busy) do Wait(100) end
     invState = nil -- wait for the inventory to say it opened
-    TriggerServerEvent('fks-stables:server:openStash', NetworkGetNetworkIdFromEntity(ent), ownKind, ownId)
+    TriggerServerEvent('fks-stables:server:openStash', FKS.NetId(ent), ownKind, ownId)
 
     if not dict then return end
     -- keep the pose while the inventory is open. ALWAYS ends when:
@@ -1037,7 +1039,7 @@ function Horse.ReviveAt(ent)
         return Notify(_L('horse_too_far'), 'error')
     end
     local name = HorseName(ent)
-    local ok, msg = Callback.Await('fks-stables:reviveHorse', NetworkGetNetworkIdFromEntity(ent),
+    local ok, msg = Callback.Await('fks-stables:reviveHorse', FKS.NetId(ent),
         ent == Horse.ped and Horse.id or nil)
     if not ok then
         Horse.reviving = false

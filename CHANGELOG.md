@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0
+
+- **Transfer wagon:** new prompt next to your own wagon (hold **C**, `Config.Prompts.wagonGive`) to give it to a
+  nearby player by server ID, like horses. Same distance rule as horses (`Config.Give.maxDistance`) and the receiver's
+  wagon limit is checked. Storage contents and stored animals go with the wagon; the storage access list is cleared.
+  The wagon cannot have anyone inside.
+- **Per-wagon transfer control:** every wagon in `config/wagons.lua` has `canGive = true`. Set `canGive = false` on a
+  wagon and it cannot be transferred (the prompt is hidden and the server refuses it). Missing field = transferable.
+- **Fixed blanket / bedroll colours:** after confirming the tack, or when taking the horse out, blankets and bedrolls
+  (and other tack using the horse palette) took the mane/tail colour (e.g. a black blanket turned pink). The mane/tail
+  colour now only applies to the mane and tail.
+- **Fewer console warnings:** removed the repeated `GetNetworkObject: no object by ID` (wild horse zones) and
+  `NETWORK_GET_NETWORK_ID_FROM_ENTITY: no such entity` warnings (horse / wagon removed while still being set up).
+- New locale keys (all languages): `t_wagon_give`, `wgive_title`, `wgive_blocked`, `wgive_full`, `wgive_received`,
+  `wgive_done`. If you use custom locale files, add them.
+- No database changes.
+
 ## 1.5.1
 
 - **Breeding parents no longer stack:** each breeding in progress at a stable gets its own spot. Set

@@ -30,6 +30,17 @@ Look.CategoryHash = {
 }
 Look.Categories = { 'saddles', 'blankets', 'horns', 'stirrups', 'saddlebags', 'bedrolls', 'holsters', 'manes', 'tails', 'masks', 'mustaches' }
 
+-- tack categories (everything but mane / tail): never take the mane / tail colour. Some pieces (blankets,
+-- bedrolls...) use the horse palette too and turned pink / wrong colours after saving or taking the horse out.
+-- The game may return the category signed or unsigned: both forms are kept.
+local TACK = {}
+for name, h in pairs(Look.CategoryHash) do
+    if name ~= 'manes' and name ~= 'tails' then
+        TACK[h] = true
+        if h >= 0x80000000 then TACK[h - 0x100000000] = true end
+    end
+end
+
 function Look.WaitReady(ped, timeout)
     local t = GetGameTimer() + (timeout or 3000)
     while not Citizen.InvokeNative(N.ReadyToRender, ped) and GetGameTimer() < t do Wait(0) end
@@ -96,6 +107,7 @@ function Look.ApplyCoat(ped, coat, maneTail)
     end
     if maneTail then
         TintWhere(ped, maneTail, function(cat, palette)
+            if TACK[cat] then return false end
             return MANE[cat] or TAIL[cat] or (not BODY[cat] and palette == HORSE_PALETTE)
         end)
     end

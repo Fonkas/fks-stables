@@ -127,12 +127,14 @@ function Wagon.Spawn(data, at, quick)
 
     -- wait for network registration (without it the netId is invalid and the server cannot find the wagon)
     local nt = GetGameTimer() + 3000
-    while not NetworkGetEntityIsNetworked(veh) and GetGameTimer() < nt do
+    while DoesEntityExist(veh) and not NetworkGetEntityIsNetworked(veh) and GetGameTimer() < nt do
         NetworkRegisterEntityAsNetworked(veh)
         Wait(50)
     end
-    local netId = NetworkGetNetworkIdFromEntity(veh)
-    SetNetworkIdExistsOnAllMachines(netId, true)
+    -- deleted / replaced while it was being set up: stop here
+    if not DoesEntityExist(veh) or Wagon.veh ~= veh then return end
+    local netId = FKS.NetId(veh)
+    if netId ~= 0 then SetNetworkIdExistsOnAllMachines(netId, true) end
     Entity(veh).state:set('fksWagon', data.id, true)
     TriggerServerEvent('fks-stables:server:spawned', 'wagon', data.id, netId)
     if not quick then Notify(_L('wagon_ready', data.name), 'success') end
@@ -213,6 +215,30 @@ function Wagon.SendAway()
     Wagon.Despawn(true) -- no new stable: it stays at the one it had
     Notify(_L('wagon_sent', name, s and s.label or _L('stable')), 'success')
 end
+
+-- Give the wagon to another player ("Transfer wagon" prompt next to your wagon)
+function Wagon.GiveMenu()
+    if not Exists() or not Wagon.id then return end
+    local veh = Wagon.veh
+    if not B(IsVehicleSeatFree(veh, -1)) or GetVehicleNumberOfPassengers(veh) > 0 then
+        return Notify(_L('wagon_occupied'), 'error')
+    end
+    local name = Wagon.data and Wagon.data.name or ''
+    local input = UI.Prompt({ title = _L('wgive_title', name), ok = _LU('confirm'), cancel = _LU('cancel'),
+        fields = { { type = 'number', name = 'id', label = _L('access_player_id'), min = 1, step = 1, required = true } } })
+    local target = input and tonumber(input.id)
+    if not target or not Exists() then return end
+    local health = Wagon.IsBroken(Wagon.veh) and W.brokenAt or GetEntityHealth(Wagon.veh)
+    local ok, msg = Callback.Await('fks-stables:giveWagon', Wagon.id, target, health)
+    if msg then Notify(msg, ok and 'success' or 'error') end
+end
+
+-- the wagon was given to another player: it leaves the world
+RegisterNetEvent('fks-stables:client:wagonGiven', function(id)
+    if Wagon.id ~= id then return end
+    Wagon.Despawn(false)
+    Wagon.id, Wagon.data = nil, nil
+end)
 
 function Wagon.Repair()
     if Exists() and Wagon.IsBroken(Wagon.veh) then return Wagon.Fix() end -- broken: only with nails and hammer

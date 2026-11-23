@@ -235,6 +235,12 @@ Locales['it'] = {
         wagon_sent = '%s è stato mandato a %s.',
         wagon_occupied = 'Fai scendere prima tutti dal carro.',
         t_wagon_repair = 'Ripara',
+        t_wagon_give = 'Trasferisci carro',
+        wgive_title = 'Trasferisci %s a...',
+        wgive_blocked = 'Questo carro non può essere trasferito.',
+        wgive_full = '%s ha già il numero massimo di carri.',
+        wgive_received = 'Hai ricevuto il carro %s da %s.',
+        wgive_done = 'Hai trasferito %s a %s.',
     },
 
     ui = {

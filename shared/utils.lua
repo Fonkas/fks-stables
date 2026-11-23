@@ -139,3 +139,20 @@ function FKS.Clamp(v, lo, hi)
     if v > hi then return hi end
     return v
 end
+
+-- Network ids without console spam (client): the game prints a warning for every lookup of an entity /
+-- network id that does not exist here (deleted, not networked yet, or out of this player's scope)
+if not IsDuplicityVersion() then
+    -- entity -> netId (0 if the entity does not exist or is not networked)
+    function FKS.NetId(ent)
+        if not ent or ent == 0 or not DoesEntityExist(ent) or not NetworkGetEntityIsNetworked(ent) then return 0 end
+        return NetworkGetNetworkIdFromEntity(ent)
+    end
+
+    -- netId -> entity (0 if that network object does not exist on this client)
+    function FKS.NetEnt(netId)
+        netId = tonumber(netId)
+        if not netId or netId == 0 or not NetworkDoesNetworkIdExist(netId) then return 0 end
+        return NetworkGetEntityFromNetworkId(netId)
+    end
+end

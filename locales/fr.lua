@@ -235,6 +235,12 @@ Locales['fr'] = {
         wagon_sent = '%s a été envoyé à %s.',
         wagon_occupied = "Faites d'abord descendre tout le monde du chariot.",
         t_wagon_repair = 'Réparer',
+        t_wagon_give = 'Transférer le chariot',
+        wgive_title = 'Transférer %s à...',
+        wgive_blocked = 'Ce chariot ne peut pas être transféré.',
+        wgive_full = '%s a déjà le maximum de chariots.',
+        wgive_received = 'Vous avez reçu le chariot %s de %s.',
+        wgive_done = 'Vous avez transféré %s à %s.',
     },
 
     ui = {

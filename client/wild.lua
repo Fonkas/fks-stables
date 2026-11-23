@@ -24,7 +24,7 @@ local function NetOf(ent)
         NetworkRegisterEntityAsNetworked(ent)
         Wait(50)
     end
-    return NetworkGetNetworkIdFromEntity(ent)
+    return FKS.NetId(ent)
 end
 
 local function Control(ent)
@@ -111,7 +111,7 @@ RegisterNetEvent('fks-stables:client:wildHost', function(i, list)
     hosting[i] = {}
     for _, netId in ipairs(list) do
         hosting[i][netId] = true
-        local ent = NetworkGetEntityFromNetworkId(netId)
+        local ent = FKS.NetEnt(netId)
         if ent ~= 0 and DoesEntityExist(ent) and not Entity(ent).state.fksTamed and Control(ent) then Wander(ent, z) end
     end
 end)
@@ -178,7 +178,7 @@ CreateThread(function()
             local z = Z[i]
             local center = z.coords
             for netId in pairs(list) do
-                local ent = NetworkGetEntityFromNetworkId(netId)
+                local ent = FKS.NetEnt(netId)
                 if ent == 0 or not DoesEntityExist(ent) or Entity(ent).state.fksTamed then
                     list[netId] = nil
                 elseif not B(IsEntityDead(ent)) and RiderOf(ent) == 0 then -- nobody is riding it
@@ -251,7 +251,7 @@ RegisterCommand('fks_wild', function()
         local total, alive = 0, 0
         for netId in pairs(list) do
             total = total + 1
-            local ent = NetworkGetEntityFromNetworkId(netId)
+            local ent = FKS.NetEnt(netId)
             if ent ~= 0 and DoesEntityExist(ent) then alive = alive + 1 end
         end
         print(('  zone %s (host): %s horse(s) listed, %s exist here'):format(i, total, alive))

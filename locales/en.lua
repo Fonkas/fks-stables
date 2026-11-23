@@ -240,6 +240,12 @@ Locales['en'] = {
         wagon_sent = '%s was sent to %s.',
         wagon_occupied = 'Get everyone out of the wagon first.',
         t_wagon_repair = 'Repair',
+        t_wagon_give = 'Transfer wagon',
+        wgive_title = 'Transfer %s to...',
+        wgive_blocked = 'This wagon cannot be transferred.',
+        wgive_full = '%s already has the maximum number of wagons.',
+        wgive_received = 'You received the wagon %s from %s.',
+        wgive_done = 'You transferred %s to %s.',
     },
 
     -- stable menu texts (NUI)

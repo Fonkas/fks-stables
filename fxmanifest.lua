@@ -7,7 +7,7 @@ lua54 'yes'
 name 'fks-stables'
 author 'FKS'
 description 'Stables, horses, wagons, wild horse taming, training and breeding for RedM (VORP / RSG)'
-version '1.5.1'
+version '1.6.0'
 license 'GPL-3.0-or-later'
 fks_core_version '2.1.0' -- minimum fks-core version (VORP / RSG bridge, shared UI, notifications, progress bar)
 
